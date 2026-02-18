@@ -28,11 +28,12 @@ public class SecurityConfig {
                         // ✅ PUBLIC APIs
                         .requestMatchers(
                                 "/auth/login",
-                                "/auth/register",
+                                "api/auth/register",
                                 "/auth/guest",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**"
+
                         ).permitAll()
 
                         // 🔒 ADMIN APIs
