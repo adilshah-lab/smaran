@@ -4,31 +4,29 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
-
+@Getter
+@Setter
 @Entity
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Sholak {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    private Mood mood;
+//    private String title; // e.g., "Shloka 2"
 
-    private Integer durationSeconds;
-
-    @Column(length = 2000)
+    @Column(columnDefinition = "TEXT")
     private String sanskrit;
 
-    @Column(length = 2000)
-    private String english;
+    @Column(name = "englishTranslation", columnDefinition = "TEXT")
+    private String englishTranslation;
 
-    @Column(length = 2000)
-    private String hindi;
+    @Column(name = "hindiTranslation", columnDefinition = "TEXT")
+    private String hindiTranslation;
+
 
     private String source;
+
+    @Enumerated(EnumType.STRING)
+    private Mood mood;
 }

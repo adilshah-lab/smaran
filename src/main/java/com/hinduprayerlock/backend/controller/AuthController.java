@@ -41,13 +41,12 @@ public class AuthController {
     @PostMapping("/guest")
     public ResponseEntity<?> guestLogin() {
 
-        String guestId = UUID.randomUUID().toString();
+        String userId = UUID.randomUUID().toString();
 
-        String token = jwtUtil.generateToken(
-                guestId,
-                null,
-                "GUEST"
-        );
+        // 🔥 Generate safe dummy email for guest
+        String email = "guest_" + userId + "@smaraan.com";
+
+        String token = jwtUtil.generateToken(userId, email, "GUEST");
 
         return ResponseEntity.ok(
                 Map.of(

@@ -4,6 +4,7 @@ import com.hinduprayerlock.backend.model.Mood;
 import com.hinduprayerlock.backend.model.Sholak;
 import com.hinduprayerlock.backend.model.UserMoodEntity;
 import com.hinduprayerlock.backend.model.UserSholakLike;
+import com.hinduprayerlock.backend.model.dto.SholakResponse;
 import com.hinduprayerlock.backend.repository.SholakRepository;
 import com.hinduprayerlock.backend.repository.UserMoodRepository;
 import com.hinduprayerlock.backend.repository.UserSholakLikeRepository;
@@ -39,24 +40,31 @@ public class MoodService {
                 .orElse(null);
     }
 
-    public Sholak getSholakForCurrentMood(UUID userId) {
+    public SholakResponse setMoodAndGetSholak(UUID userId, Mood mood) {
 
-        Mood mood = userMoodRepository
-                .findTopByUserIdOrderBySelectedAtDesc(userId)
-                .map(UserMoodEntity::getMood)
-                .orElseThrow(() -> new RuntimeException("Mood not found"));
+        UserMoodEntity entity =
+                new UserMoodEntity(userId, mood, LocalDateTime.now());
 
-        // ✅ Correct way: fetch by enum
+        userMoodRepository.save(entity);
+
         List<Sholak> sholaks = sholakRepository.findByMood(mood);
 
         if (sholaks.isEmpty()) {
             throw new RuntimeException("No sholaks found for mood: " + mood);
         }
 
-        // ✅ Better random generator (thread-safe)
         int randomIndex = ThreadLocalRandom.current().nextInt(sholaks.size());
 
-        return sholaks.get(randomIndex);
+        Sholak sholak = sholaks.get(randomIndex);
+
+        return new SholakResponse(
+                sholak.getId(),
+//                sholak.getTitle(),
+                sholak.getSanskrit(),
+                sholak.getEnglishTranslation(),
+                sholak.getHindiTranslation(),
+                sholak.getSource()
+        );
     }
 
     public void likeSholak(UUID userId, Long sholakId) {

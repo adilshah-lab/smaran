@@ -16,9 +16,9 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI prayerLockOpenAPI() {
         return new OpenAPI()
-                .servers(List.of(
-                        new Server().url("https://smaraan.com")
-                ))
+//                .servers(List.of(
+//                        new Server().url("https://smaraan.com")
+//                ))
                 .info(new Info()
                         .title("Prayer Lock API")
                         .description("Backend APIs for Prayer Lock mobile application")

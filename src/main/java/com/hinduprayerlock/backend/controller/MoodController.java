@@ -3,6 +3,7 @@ package com.hinduprayerlock.backend.controller;
 import com.hinduprayerlock.backend.model.AuthUser;
 import com.hinduprayerlock.backend.model.Mood;
 import com.hinduprayerlock.backend.model.Sholak;
+import com.hinduprayerlock.backend.model.dto.SholakResponse;
 import com.hinduprayerlock.backend.service.MoodService;
 import com.hinduprayerlock.backend.service.UserService;
 
@@ -29,15 +30,19 @@ public class MoodController {
             @AuthenticationPrincipal AuthUser user,
             @RequestParam Mood mood
     ) {
+
+        UUID userId = UUID.fromString(user.getUserId());
+
         userService.getOrCreateUser(user);
 
-        moodService.setMood(
-                UUID.fromString(user.getUserId()),
-                mood
-        );
+        SholakResponse sholak =
+                moodService.setMoodAndGetSholak(userId, mood);
 
         return ResponseEntity.ok(
-                Map.of("message", "Mood saved successfully")
+                Map.of(
+                        "mood", mood,
+                        "sholak", sholak
+                )
         );
     }
 
