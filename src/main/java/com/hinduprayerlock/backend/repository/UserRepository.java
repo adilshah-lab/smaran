@@ -15,6 +15,8 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID>{
 
     boolean existsByEmail(String email);
 
+    boolean existsByPhoneNumber(String phoneNumber);
+
     @Query("""
 SELECT u.id, u.email, u.createdAt, COUNT(h.id)
 FROM UserEntity u

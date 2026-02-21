@@ -5,6 +5,7 @@ import com.hinduprayerlock.backend.ai.dto.RegisterRequest;
 import com.hinduprayerlock.backend.model.dto.LoginRequest;
 import com.hinduprayerlock.backend.service.AuthService;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.hinduprayerlock.backend.utils.JwtUtil;
@@ -27,7 +28,7 @@ public class AuthController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         String token = authService.register(request);
         return ResponseEntity.ok(Map.of("token", token));
     }

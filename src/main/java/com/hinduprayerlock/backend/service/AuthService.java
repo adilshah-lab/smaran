@@ -25,12 +25,18 @@ public class AuthService {
     public String register(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new EmailAlreadyExistsException("Email already registered");
+            throw new RuntimeException("Email already registered");
+        }
+
+        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            throw new RuntimeException("Phone number already registered");
         }
 
         UserEntity user = new UserEntity(
                 UUID.randomUUID(),
+                request.getUsername(),   // no uniqueness check
                 request.getEmail(),
+                request.getPhoneNumber(),
                 passwordEncoder.encode(request.getPassword()),
                 LocalDateTime.now()
         );
