@@ -34,10 +34,10 @@ public class AuthService {
 
         UserEntity user = new UserEntity(
                 UUID.randomUUID(),
-                request.getUsername(),   // no uniqueness check
+                request.getUsername(),
                 request.getEmail(),
-                request.getPhoneNumber(),
                 passwordEncoder.encode(request.getPassword()),
+                request.getPhoneNumber(),
                 LocalDateTime.now()
         );
 
