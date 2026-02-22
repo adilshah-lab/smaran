@@ -1,5 +1,6 @@
 package com.hinduprayerlock.backend.service;
 
+import com.hinduprayerlock.backend.ai.dto.AuthResponse;
 import com.hinduprayerlock.backend.ai.dto.RegisterRequest;
 import com.hinduprayerlock.backend.exceptions.EmailAlreadyExistsException;
 import com.hinduprayerlock.backend.model.UserEntity;
@@ -22,7 +23,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    public String register(RegisterRequest request) {
+    public AuthResponse register(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already registered");
@@ -43,11 +44,13 @@ public class AuthService {
 
         userRepository.save(user);
 
-        return jwtUtil.generateToken(
+        String token = jwtUtil.generateToken(
                 user.getId().toString(),
                 user.getEmail(),
                 "USER"
         );
+
+        return new AuthResponse(token, user.getUsername());
     }
 
     public String login(LoginRequest request) {

@@ -1,6 +1,7 @@
 package com.hinduprayerlock.backend.controller;
 
 
+import com.hinduprayerlock.backend.ai.dto.AuthResponse;
 import com.hinduprayerlock.backend.ai.dto.RegisterRequest;
 import com.hinduprayerlock.backend.model.dto.LoginRequest;
 import com.hinduprayerlock.backend.service.AuthService;
@@ -28,9 +29,9 @@ public class AuthController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
-        String token = authService.register(request);
-        return ResponseEntity.ok(Map.of("token", token));
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+        AuthResponse response = authService.register(request);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")
