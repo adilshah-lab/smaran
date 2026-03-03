@@ -33,11 +33,15 @@ public class SecurityConfig {
                                 "/auth/guest",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
-                                "/v3/api-docs/**"
+                                "/v3/api-docs/**",
+                                "/api/mood"
                         ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/**")
                         .hasAnyRole("USER", "GUEST", "ADMIN")
+                        .requestMatchers("/api/subscription/**").authenticated()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

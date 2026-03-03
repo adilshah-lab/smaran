@@ -23,20 +23,14 @@ import java.util.UUID;
 public class MoodController {
 
     private final MoodService moodService;
-    private final UserService userService;
 
     @PostMapping
     public ResponseEntity<?> setMood(
-            @AuthenticationPrincipal AuthUser user,
             @RequestParam Mood mood
     ) {
 
-        UUID userId = UUID.fromString(user.getUserId());
-
-        userService.getOrCreateUser(user);
-
         SholakResponse sholak =
-                moodService.setMoodAndGetSholak(userId, mood);
+                moodService.getSholakByMood(mood);
 
         return ResponseEntity.ok(
                 Map.of(
@@ -47,17 +41,15 @@ public class MoodController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getMood(
-            @AuthenticationPrincipal AuthUser user
+    public ResponseEntity<?> getSholak(
+            @RequestParam Mood mood
     ) {
-        userService.getOrCreateUser(user);
 
         return ResponseEntity.ok(
                 Map.of(
-                        "mood",
-                        moodService.getCurrentMood(
-                                UUID.fromString(user.getUserId())
-                        )
+                        "mood", mood,
+                        "sholak",
+                        moodService.getSholakByMood(mood)
                 )
         );
     }

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -99,5 +100,27 @@ public class MoodService {
                 .stream()
                 .map(UserSholakLike::getSholak)
                 .toList();
+    }
+
+    public SholakResponse getSholakByMood(Mood mood) {
+
+        List<Sholak> sholaks = sholakRepository.findByMood(mood);
+
+        if (sholaks.isEmpty()) {
+            throw new RuntimeException("No sholak found for mood: " + mood);
+        }
+
+        // pick random sholak
+        Sholak randomSholak = sholaks.get(
+                new Random().nextInt(sholaks.size())
+        );
+
+        return new SholakResponse(
+                randomSholak.getId(),
+                randomSholak.getSanskrit(),
+                randomSholak.getEnglishTranslation(),
+                randomSholak.getHindiTranslation(),
+                randomSholak.getSource()
+        );
     }
 }
