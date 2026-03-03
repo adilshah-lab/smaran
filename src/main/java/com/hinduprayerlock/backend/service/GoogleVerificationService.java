@@ -10,7 +10,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.io.FileInputStream;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -20,8 +21,8 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class GoogleVerificationService {
 
-    @Value("${GOOGLE_SERVICE_ACCOUNT_PATH}")
-    private String serviceAccountPath;
+    @Value("${GOOGLE_SERVICE_ACCOUNT_JSON}")
+    private String serviceAccountJson;
 
     @Value("${APP_PACKAGE_NAME}")
     private String packageName;
@@ -33,9 +34,13 @@ public class GoogleVerificationService {
 
         try {
 
-            // 1️⃣ Get Access Token
+            // 1️⃣ Create credentials from JSON ENV variable
             GoogleCredentials credentials = GoogleCredentials
-                    .fromStream(new FileInputStream(serviceAccountPath))
+                    .fromStream(
+                            new ByteArrayInputStream(
+                                    serviceAccountJson.getBytes(StandardCharsets.UTF_8)
+                            )
+                    )
                     .createScoped(Collections.singleton(
                             "https://www.googleapis.com/auth/androidpublisher"
                     ));
