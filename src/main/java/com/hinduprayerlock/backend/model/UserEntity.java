@@ -39,4 +39,7 @@ public class UserEntity {
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private Boolean isSubscribed = false;
 }

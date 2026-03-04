@@ -5,6 +5,7 @@ import com.hinduprayerlock.backend.ai.dto.SubscriptionRequest;
 import com.hinduprayerlock.backend.model.Subscription;
 import com.hinduprayerlock.backend.model.SubscriptionStatus;
 import com.hinduprayerlock.backend.repository.SubscriptionRepository;
+import com.hinduprayerlock.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,7 @@ public class SubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
     private final GoogleVerificationService googleService;
+    private final UserRepository userRepository;
 
     /**
      * Verify subscription with Google and save in DB
@@ -39,9 +41,9 @@ public class SubscriptionService {
                         request.getPurchaseToken()
                 );
 
-        // Save subscription
+        // Create subscription entity
         Subscription subscription = new Subscription();
-        subscription.setUserId(userId);  // UUID here
+        subscription.setUserId(userId);
         subscription.setProductId(request.getProductId());
         subscription.setPurchaseToken(request.getPurchaseToken());
         subscription.setOrderId(googleResponse.getOrderId());
@@ -50,7 +52,14 @@ public class SubscriptionService {
         subscription.setAutoRenewing(googleResponse.getAutoRenewing());
         subscription.setStatus(SubscriptionStatus.ACTIVE);
 
+        // Save subscription
         subscriptionRepository.save(subscription);
+
+        // Update user subscription flag
+        userRepository.findById(userId).ifPresent(user -> {
+            user.setIsSubscribed(true);
+            userRepository.save(user);
+        });
     }
 
     /**
@@ -60,9 +69,26 @@ public class SubscriptionService {
 
         return subscriptionRepository
                 .findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
-                .filter(sub -> sub.getExpiryTime()
-                        .isAfter(LocalDateTime.now()))
-                .isPresent();
+                .map(sub -> {
+
+                    boolean active =
+                            sub.getExpiryTime().isAfter(LocalDateTime.now());
+
+                    // If expired update user flag
+                    if (!active) {
+
+                        sub.setStatus(SubscriptionStatus.EXPIRED);
+                        subscriptionRepository.save(sub);
+
+                        userRepository.findById(userId).ifPresent(user -> {
+                            user.setIsSubscribed(false);
+                            userRepository.save(user);
+                        });
+                    }
+
+                    return active;
+
+                }).orElse(false);
     }
 
     /**
@@ -92,5 +118,17 @@ public class SubscriptionService {
 
         sub.setStatus(status);
         subscriptionRepository.save(sub);
+
+        // Update user subscription flag accordingly
+        userRepository.findById(sub.getUserId()).ifPresent(user -> {
+
+            if (status == SubscriptionStatus.ACTIVE) {
+                user.setIsSubscribed(true);
+            } else {
+                user.setIsSubscribed(false);
+            }
+
+            userRepository.save(user);
+        });
     }
 }

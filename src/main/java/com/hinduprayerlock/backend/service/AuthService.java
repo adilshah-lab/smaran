@@ -5,6 +5,8 @@ import com.hinduprayerlock.backend.ai.dto.RegisterRequest;
 import com.hinduprayerlock.backend.exceptions.EmailAlreadyExistsException;
 import com.hinduprayerlock.backend.model.UserEntity;
 import com.hinduprayerlock.backend.model.dto.LoginRequest;
+import com.hinduprayerlock.backend.model.dto.UpdateUserRequest;
+import com.hinduprayerlock.backend.model.dto.UserResponse;
 import com.hinduprayerlock.backend.repository.UserRepository;
 import com.hinduprayerlock.backend.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -33,14 +35,14 @@ public class AuthService {
             throw new RuntimeException("Phone number already registered");
         }
 
-        UserEntity user = new UserEntity(
-                UUID.randomUUID(),
-                request.getUsername(),
-                request.getEmail(),
-                passwordEncoder.encode(request.getPassword()),
-                request.getPhoneNumber(),
-                LocalDateTime.now()
-        );
+        UserEntity user = new UserEntity();
+        user.setId(UUID.randomUUID());
+        user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setCreatedAt(LocalDateTime.now());
+        user.setIsSubscribed(false); // default value
 
         userRepository.save(user);
 
@@ -70,6 +72,47 @@ public class AuthService {
                 user.getId().toString(),
                 user.getEmail(),
                 "USER"
+        );
+    }
+
+    public UserResponse getUser(UUID userId) {
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return new UserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getPhoneNumber(),
+                user.getIsSubscribed(),
+                user.getCreatedAt()
+        );
+    }
+
+
+    public UserResponse updateUser(UUID userId, UpdateUserRequest request) {
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (request.getUsername() != null) {
+            user.setUsername(request.getUsername());
+        }
+
+        if (request.getPhoneNumber() != null) {
+            user.setPhoneNumber(request.getPhoneNumber());
+        }
+
+        userRepository.save(user);
+
+        return new UserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getPhoneNumber(),
+                user.getIsSubscribed(),
+                user.getCreatedAt()
         );
     }
 }

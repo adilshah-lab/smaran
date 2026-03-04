@@ -3,7 +3,10 @@ package com.hinduprayerlock.backend.controller;
 
 import com.hinduprayerlock.backend.ai.dto.AuthResponse;
 import com.hinduprayerlock.backend.ai.dto.RegisterRequest;
+import com.hinduprayerlock.backend.model.UserEntity;
 import com.hinduprayerlock.backend.model.dto.LoginRequest;
+import com.hinduprayerlock.backend.model.dto.UpdateUserRequest;
+import com.hinduprayerlock.backend.model.dto.UserResponse;
 import com.hinduprayerlock.backend.service.AuthService;
 
 import jakarta.validation.Valid;
@@ -56,5 +59,32 @@ public class AuthController {
                         "role", "GUEST"
                 )
         );
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getUser(@RequestHeader("Authorization") String token) {
+
+        String jwt = token.replace("Bearer ", "");
+
+        String userId = jwtUtil.extractUserId(jwt);
+
+        return ResponseEntity.ok(
+                authService.getUser(UUID.fromString(userId))
+        );
+    }
+
+    @PutMapping("/update")
+    public ResponseEntity<?> updateUser(
+            @RequestHeader("Authorization") String token,
+            @RequestBody UpdateUserRequest request
+    ) {
+
+        String jwt = token.replace("Bearer ", "");
+
+        String userId = jwtUtil.extractUserId(jwt);
+
+        UserResponse user = authService.updateUser(UUID.fromString(userId), request);
+
+        return ResponseEntity.ok(user);
     }
 }
