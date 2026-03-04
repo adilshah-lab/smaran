@@ -50,7 +50,11 @@ public class AuthService {
                 "USER"
         );
 
-        return new AuthResponse(token, user.getUsername());
+        return new AuthResponse(
+                token,
+                user.getUsername(),
+                user.getCreatedAt()
+        );
     }
 
     public String login(LoginRequest request) {
