@@ -98,17 +98,19 @@ public class AuthService {
 
         // Update username
         if (request.getUsername() != null && !request.getUsername().trim().isEmpty()) {
-            user.setUsername(request.getUsername());
+            user.setUsername(request.getUsername().trim());
         }
 
-        // Update phone number (check uniqueness)
+        // Update phone number
         if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
 
-            if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            UserEntity existingUser = userRepository.findByPhoneNumber(request.getPhoneNumber());
+
+            if (existingUser != null && !existingUser.getId().equals(userId)) {
                 throw new RuntimeException("Phone number already in use");
             }
 
-            user.setPhoneNumber(request.getPhoneNumber());
+            user.setPhoneNumber(request.getPhoneNumber().trim());
         }
 
         userRepository.save(user);

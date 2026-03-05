@@ -24,4 +24,6 @@ LEFT JOIN UserPrayerHistory h ON u.id = h.userId
 GROUP BY u.id, u.email, u.createdAt
 """)
     List<Object[]> getUsersWithUsageRaw();
+
+    UserEntity findByPhoneNumber(String phoneNumber);
 }
