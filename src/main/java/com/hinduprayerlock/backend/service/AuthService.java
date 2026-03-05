@@ -96,11 +96,18 @@ public class AuthService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (request.getUsername() != null) {
+        // Update username
+        if (request.getUsername() != null && !request.getUsername().trim().isEmpty()) {
             user.setUsername(request.getUsername());
         }
 
-        if (request.getPhoneNumber() != null) {
+        // Update phone number (check uniqueness)
+        if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
+
+            if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+                throw new RuntimeException("Phone number already in use");
+            }
+
             user.setPhoneNumber(request.getPhoneNumber());
         }
 
