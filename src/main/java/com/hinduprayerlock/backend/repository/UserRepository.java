@@ -25,5 +25,7 @@ GROUP BY u.id, u.email, u.createdAt
 """)
     List<Object[]> getUsersWithUsageRaw();
 
-    UserEntity findByPhoneNumber(String phoneNumber);
+    Optional<UserEntity> findByPhoneNumber(String phoneNumber);
+
+    Optional<UserEntity> findByEmailOrPhoneNumber(String email, String phoneNumber);
 }

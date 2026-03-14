@@ -14,62 +14,39 @@ java {
 	}
 }
 
-configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
-}
-
 repositories {
 	mavenCentral()
 }
 
 dependencies {
 
-	// =============================
-	// Spring Boot Starters
-	// =============================
+	// Spring
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
-	// =============================
 	// Database
-	// =============================
 	runtimeOnly 'org.postgresql:postgresql'
 
-	// =============================
-	// JWT (HS256 – Cloud Agnostic)
-	// =============================
+	// JWT
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
-	// =============================
+	// Google Auth
+	implementation 'com.google.auth:google-auth-library-oauth2-http:1.23.0'
+
 	// Lombok
-	// =============================
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
-	// =============================
-	// Swagger / OpenAPI
-	// =============================
+	// Swagger
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
 
-	// =============================
 	// Testing
-	// =============================
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-
-
-
-// Google Auth
-	implementation 'com.google.auth:google-auth-library-oauth2-http:1.19.0'
-
-	implementation 'org.springframework.boot:spring-boot-starter-webflux'
-
-
 }
 
 tasks.named('test') {
