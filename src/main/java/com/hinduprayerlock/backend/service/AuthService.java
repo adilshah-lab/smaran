@@ -3,6 +3,9 @@ package com.hinduprayerlock.backend.service;
 import com.hinduprayerlock.backend.ai.dto.AuthResponse;
 import com.hinduprayerlock.backend.ai.dto.RegisterRequest;
 import com.hinduprayerlock.backend.exceptions.EmailAlreadyExistsException;
+import com.hinduprayerlock.backend.exceptions.InvalidCredentialsException;
+import com.hinduprayerlock.backend.exceptions.PhoneAlreadyExistsException;
+import com.hinduprayerlock.backend.exceptions.ResourceNotFoundException;
 import com.hinduprayerlock.backend.model.UserEntity;
 import com.hinduprayerlock.backend.model.dto.LoginRequest;
 import com.hinduprayerlock.backend.model.dto.UpdateUserRequest;
@@ -15,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -28,21 +32,21 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered");
+            throw new EmailAlreadyExistsException("Email already registered");
         }
 
         if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-            throw new RuntimeException("Phone number already registered");
+            throw new PhoneAlreadyExistsException("Phone number already registered");
         }
 
         UserEntity user = new UserEntity();
         user.setId(UUID.randomUUID());
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setPhoneNumber(request.getPhoneNumber());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setCreatedAt(LocalDateTime.now());
-        user.setIsSubscribed(false); // default value
+        user.setIsSubscribed(false);
 
         userRepository.save(user);
 
@@ -52,20 +56,21 @@ public class AuthService {
                 "USER"
         );
 
-        return new AuthResponse(
-                token,
-                user.getUsername(),
-                user.getCreatedAt()
-        );
+        return new AuthResponse(token, user.getUsername(), user.getCreatedAt());
     }
 
     public String login(LoginRequest request) {
 
-        UserEntity user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+        if (request.getIdentifier() == null || request.getIdentifier().isBlank()) {
+            throw new InvalidCredentialsException("Identifier is required");
+        }
+
+        UserEntity user = userRepository
+                .findByEmailOrPhoneNumber(request.getIdentifier(), request.getIdentifier())
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid credentials"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new InvalidCredentialsException("Invalid credentials");
         }
 
         return jwtUtil.generateToken(
@@ -78,36 +83,28 @@ public class AuthService {
     public UserResponse getUser(UUID userId) {
 
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        return new UserResponse(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getPhoneNumber(),
-                user.getIsSubscribed(),
-                user.getCreatedAt()
-        );
+        return mapToResponse(user);
     }
 
 
     public UserResponse updateUser(UUID userId, UpdateUserRequest request) {
 
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        // Update username
         if (request.getUsername() != null && !request.getUsername().trim().isEmpty()) {
             user.setUsername(request.getUsername().trim());
         }
 
-        // Update phone number
         if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
 
-            UserEntity existingUser = userRepository.findByPhoneNumber(request.getPhoneNumber());
+            Optional<UserEntity> existingUser =
+                    userRepository.findByPhoneNumber(request.getPhoneNumber());
 
-            if (existingUser != null && !existingUser.getId().equals(userId)) {
-                throw new RuntimeException("Phone number already in use");
+            if (existingUser.isPresent() && !existingUser.get().getId().equals(userId)) {
+                throw new PhoneAlreadyExistsException("Phone number already in use");
             }
 
             user.setPhoneNumber(request.getPhoneNumber().trim());
@@ -115,6 +112,11 @@ public class AuthService {
 
         userRepository.save(user);
 
+        return mapToResponse(user);
+    }
+
+    private UserResponse mapToResponse(UserEntity user) {
+
         return new UserResponse(
                 user.getId(),
                 user.getUsername(),
@@ -123,5 +125,6 @@ public class AuthService {
                 user.getIsSubscribed(),
                 user.getCreatedAt()
         );
+
     }
 }
