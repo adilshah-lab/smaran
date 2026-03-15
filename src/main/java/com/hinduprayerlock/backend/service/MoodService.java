@@ -3,11 +3,11 @@ package com.hinduprayerlock.backend.service;
 import com.hinduprayerlock.backend.model.Mood;
 import com.hinduprayerlock.backend.model.Sholak;
 import com.hinduprayerlock.backend.model.UserMoodEntity;
-import com.hinduprayerlock.backend.model.UserSholakLike;
+import com.hinduprayerlock.backend.model.LikedShlok;
 import com.hinduprayerlock.backend.model.dto.SholakResponse;
 import com.hinduprayerlock.backend.repository.SholakRepository;
 import com.hinduprayerlock.backend.repository.UserMoodRepository;
-import com.hinduprayerlock.backend.repository.UserSholakLikeRepository;
+import com.hinduprayerlock.backend.repository.LikedShlokRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +23,7 @@ public class MoodService {
 
     private final UserMoodRepository userMoodRepository;
     private final SholakRepository sholakRepository;
-    private final UserSholakLikeRepository userSholakLikeRepository;
+    private final LikedShlokRepository userSholakLikeRepository;
 
     public void setMood(UUID userId, Mood mood) {
 
@@ -68,39 +68,39 @@ public class MoodService {
         );
     }
 
-    public void likeSholak(UUID userId, Long sholakId) {
-
-        boolean alreadyLiked = userSholakLikeRepository
-                .findByUserIdAndSholakId(userId, sholakId)
-                .isPresent();
-
-        if (alreadyLiked) {
-            return; // already liked
-        }
-
-        Sholak sholak = sholakRepository.findById(sholakId)
-                .orElseThrow(() -> new RuntimeException("Sholak not found"));
-
-        UserSholakLike like = UserSholakLike.builder()
-                .userId(userId)
-                .sholak(sholak)
-                .likedAt(LocalDateTime.now())
-                .build();
-
-        userSholakLikeRepository.save(like);
-    }
-
-    public void unlikeSholak(UUID userId, Long sholakId) {
-        userSholakLikeRepository.deleteByUserIdAndSholakId(userId, sholakId);
-    }
-
-    public List<Sholak> getLikedSholaks(UUID userId) {
-
-        return userSholakLikeRepository.findByUserId(userId)
-                .stream()
-                .map(UserSholakLike::getSholak)
-                .toList();
-    }
+//    public void likeSholak(UUID userId, Long sholakId) {
+//
+//        boolean alreadyLiked = userSholakLikeRepository
+//                .findByUserIdAndSholakId(userId, sholakId)
+//                .isPresent();
+//
+//        if (alreadyLiked) {
+//            return; // already liked
+//        }
+//
+//        Sholak sholak = sholakRepository.findById(sholakId)
+//                .orElseThrow(() -> new RuntimeException("Sholak not found"));
+//
+//        LikedShlok like = LikedShlok.builder()
+//                .userId(userId)
+//                .sholak(sholak)
+//                .likedAt(LocalDateTime.now())
+//                .build();
+//
+//        userSholakLikeRepository.save(like);
+//    }
+//
+//    public void unlikeSholak(UUID userId, Long sholakId) {
+//        userSholakLikeRepository.deleteByUserIdAndSholakId(userId, sholakId);
+//    }
+//
+//    public List<Sholak> getLikedSholaks(UUID userId) {
+//
+//        return userSholakLikeRepository.findByUserId(userId)
+//                .stream()
+//                .map(LikedShlok::getSholak)
+//                .toList();
+//    }
 
     public SholakResponse getSholakByMood(Mood mood) {
 

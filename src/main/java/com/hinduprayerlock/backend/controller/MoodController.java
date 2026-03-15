@@ -54,33 +54,33 @@ public class MoodController {
         );
     }
 
-    @PostMapping("/like/{sholakId}")
-    public ResponseEntity<String> likeSholak(
-            @AuthenticationPrincipal AuthUser user,
-            @PathVariable Long sholakId) {
-
-        UUID userId = UUID.fromString(user.getUserId());
-
-        moodService.likeSholak(userId, sholakId);
-        return ResponseEntity.ok("Sholak liked successfully");
-    }
-
-    // ✅ 5. Unlike Sholak
-    @DeleteMapping("/{userId}/like/{sholakId}")
-    public ResponseEntity<String> unlikeSholak(
-            @PathVariable UUID userId,
-            @PathVariable Long sholakId) {
-
-        moodService.unlikeSholak(userId, sholakId);
-        return ResponseEntity.ok("Sholak unliked successfully");
-    }
-
-    // ✅ 6. Get All Liked Sholaks
-    @GetMapping("/{userId}/liked")
-    public ResponseEntity<List<Sholak>> getLikedSholaks(
-            @PathVariable UUID userId) {
-
-        List<Sholak> likedSholaks = moodService.getLikedSholaks(userId);
-        return ResponseEntity.ok(likedSholaks);
-    }
+//    @PostMapping("/like/{sholakId}")
+//    public ResponseEntity<String> likeSholak(
+//            @AuthenticationPrincipal AuthUser user,
+//            @PathVariable Long sholakId) {
+//
+//        UUID userId = UUID.fromString(user.getUserId());
+//
+//        moodService.likeSholak(userId, sholakId);
+//        return ResponseEntity.ok("Sholak liked successfully");
+//    }
+//
+//    // ✅ 5. Unlike Sholak
+//    @DeleteMapping("/{userId}/like/{sholakId}")
+//    public ResponseEntity<String> unlikeSholak(
+//            @PathVariable UUID userId,
+//            @PathVariable Long sholakId) {
+//
+//        moodService.unlikeSholak(userId, sholakId);
+//        return ResponseEntity.ok("Sholak unliked successfully");
+//    }
+//
+//    // ✅ 6. Get All Liked Sholaks
+//    @GetMapping("/{userId}/liked")
+//    public ResponseEntity<List<Sholak>> getLikedSholaks(
+//            @PathVariable UUID userId) {
+//
+//        List<Sholak> likedSholaks = moodService.getLikedSholaks(userId);
+//        return ResponseEntity.ok(likedSholaks);
+//    }
 }
