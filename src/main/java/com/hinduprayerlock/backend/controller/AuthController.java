@@ -2,6 +2,7 @@ package com.hinduprayerlock.backend.controller;
 
 
 import com.hinduprayerlock.backend.ai.dto.AuthResponse;
+import com.hinduprayerlock.backend.ai.dto.LoginResponse;
 import com.hinduprayerlock.backend.ai.dto.RegisterRequest;
 import com.hinduprayerlock.backend.model.UserEntity;
 import com.hinduprayerlock.backend.model.dto.LoginRequest;
@@ -38,9 +39,11 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        String token = authService.login(request);
-        return ResponseEntity.ok(Map.of("token", token));
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+
+        LoginResponse response = authService.login(request);
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/guest")

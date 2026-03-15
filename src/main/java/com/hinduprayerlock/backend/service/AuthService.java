@@ -1,6 +1,7 @@
 package com.hinduprayerlock.backend.service;
 
 import com.hinduprayerlock.backend.ai.dto.AuthResponse;
+import com.hinduprayerlock.backend.ai.dto.LoginResponse;
 import com.hinduprayerlock.backend.ai.dto.RegisterRequest;
 import com.hinduprayerlock.backend.exceptions.EmailAlreadyExistsException;
 import com.hinduprayerlock.backend.exceptions.InvalidCredentialsException;
@@ -59,7 +60,7 @@ public class AuthService {
         return new AuthResponse(token, user.getUsername(), user.getCreatedAt());
     }
 
-    public String login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request) {
 
         if (request.getIdentifier() == null || request.getIdentifier().isBlank()) {
             throw new InvalidCredentialsException("Identifier is required");
@@ -73,10 +74,16 @@ public class AuthService {
             throw new InvalidCredentialsException("Invalid credentials");
         }
 
-        return jwtUtil.generateToken(
+        String token = jwtUtil.generateToken(
                 user.getId().toString(),
                 user.getEmail(),
                 "USER"
+        );
+
+        return new LoginResponse(
+                token,
+                user.getUsername(),
+                user.getEmail()
         );
     }
 
