@@ -1,25 +1,30 @@
 package com.hinduprayerlock.backend.controller;
 
-import com.hinduprayerlock.backend.ai.dto.SyncRequest;
-import com.hinduprayerlock.backend.service.SyncService;
+import com.hinduprayerlock.backend.model.dto.UserStateResponse;
+import com.hinduprayerlock.backend.model.dto.UserSyncRequest;
 import org.springframework.web.bind.annotation.*;
+
+
+import com.hinduprayerlock.backend.service.UserSyncService;
 
 @RestController
 @RequestMapping("/api/user")
 public class UserSyncController {
 
-    private final SyncService syncService;
+    private final UserSyncService service;
 
-    public UserSyncController(SyncService syncService) {
-        this.syncService = syncService;
+    public UserSyncController(UserSyncService service) {
+        this.service = service;
     }
 
     @PostMapping("/sync")
-    public void syncUserData(
-            @RequestBody SyncRequest request,
-            @RequestHeader("Authorization") String token
-    ) {
+    public void sync(@RequestBody UserSyncRequest request) {
+        service.syncUserData(request);
+    }
 
-        syncService.sync(request, token);
+    @GetMapping("/states")
+    public UserStateResponse getState(@RequestParam Long userId) {
+        return service.getUserState(userId);
     }
 }
+

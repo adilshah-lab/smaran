@@ -7,8 +7,8 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "liked_shloks")
-public class LikedShlok {
+@Table(name = "jaap_stats")
+public class JaapStats {
 
     @Id
     @GeneratedValue
@@ -16,5 +16,7 @@ public class LikedShlok {
 
     private Long userId;
 
-    private Integer shlokId;
+    private int totalJaap = 0;
+
+    private int todayJaap = 0;
 }

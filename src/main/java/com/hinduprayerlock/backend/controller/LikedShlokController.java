@@ -17,7 +17,7 @@ public class LikedShlokController {
 
     @PostMapping("/liked-shlok")
     public void likeShlok(
-            @RequestParam String userId,
+            @RequestParam Long userId,
             @RequestParam Integer shlokId){
 
         service.likeShlok(userId, shlokId);
@@ -25,7 +25,7 @@ public class LikedShlokController {
 
     @DeleteMapping("/liked-shlok/{shlokId}")
     public void unlikeShlok(
-            @RequestParam String userId,
+            @RequestParam Long userId,
             @PathVariable Integer shlokId){
 
         service.unlikeShlok(userId, shlokId);
@@ -33,7 +33,7 @@ public class LikedShlokController {
 
     @GetMapping("/liked-shloks")
     public List<Integer> getLikedShloks(
-            @RequestParam String userId){
+            @RequestParam Long userId){
 
         return service.getLikedShloks(userId);
     }
