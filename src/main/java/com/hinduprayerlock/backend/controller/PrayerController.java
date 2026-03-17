@@ -36,7 +36,7 @@ public class PrayerController {
 
         // 3. Get prayer (DB-first, AI fallback, no duplicates)
         PrayerEntity prayer = prayerService.getPrayerForUser(
-                UUID.fromString(user.getUserId()),
+                user.getId(),
                 mood
         );
 

@@ -25,7 +25,7 @@ public class LikedShlokController {
             Authentication authentication
     ){
         AuthUser user = (AuthUser) authentication.getPrincipal();
-        UUID userId = UUID.fromString(user.getUserId());
+        UUID userId = user.getId();
 
         service.likeShlok(userId, shlokId);
     }
@@ -36,7 +36,7 @@ public class LikedShlokController {
             Authentication authentication
     ){
         AuthUser user = (AuthUser) authentication.getPrincipal();
-        UUID userId = UUID.fromString(user.getUserId());
+        UUID userId = user.getId();
 
         service.unlikeShlok(userId, shlokId);
     }
@@ -45,7 +45,7 @@ public class LikedShlokController {
     public List<Integer> getLikedShloks(Authentication authentication){
 
         AuthUser user = (AuthUser) authentication.getPrincipal();
-        UUID userId = UUID.fromString(user.getUserId());
+        UUID userId = user.getId();
 
         return service.getLikedShloks(userId);
     }

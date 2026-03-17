@@ -17,6 +17,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -36,7 +37,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String header = request.getHeader("Authorization");
 
-        // No token → continue without authentication
+        // No token → continue
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -47,9 +48,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             Claims claims = jwtUtil.validateToken(token);
 
             String role = claims.get("role", String.class);
+            String email = claims.get("email", String.class);
 
+            // ✅ FIX: Convert String → UUID
+            UUID userId = UUID.fromString(claims.getSubject());
+
+            // ✅ Create AuthUser correctly
             AuthUser user = new AuthUser(
-                    claims.getSubject(),
+                    userId,
                     claims.get("email", String.class),
                     role
             );
@@ -61,7 +67,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                             List.of(new SimpleGrantedAuthority("ROLE_" + role))
                     );
 
-            // 🔥 VERY IMPORTANT LINE
             authentication.setDetails(
                     new WebAuthenticationDetailsSource().buildDetails(request)
             );
@@ -69,11 +74,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
         } catch (Exception e) {
-            // Clear context if token invalid
+            // ❌ Invalid token → clear auth
             SecurityContextHolder.clearContext();
         }
 
-        // Continue filter chain ALWAYS
         filterChain.doFilter(request, response);
     }
 }

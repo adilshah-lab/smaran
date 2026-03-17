@@ -1,9 +1,10 @@
 package com.hinduprayerlock.backend.controller;
 
+import com.hinduprayerlock.backend.model.AuthUser;
 import com.hinduprayerlock.backend.model.dto.UserStateResponse;
 import com.hinduprayerlock.backend.model.dto.UserSyncRequest;
 import com.hinduprayerlock.backend.service.UserSyncService;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -21,20 +22,30 @@ public class UserSyncController {
     // 🔥 SYNC API
     @PostMapping("/sync")
     public void sync(
-            Authentication authentication,
+            @AuthenticationPrincipal AuthUser user,
             @RequestBody UserSyncRequest request
     ) {
 
-        UUID userId = UUID.fromString(authentication.getName());
+        if (user == null || user.getId() == null) {
+            throw new RuntimeException("User not authenticated properly");
+        }
+
+        UUID userId = user.getId(); // ✅ DIRECT (NO STRING PARSING)
 
         service.syncUserData(userId, request);
     }
 
     // 🔥 STATE API
     @GetMapping("/state")
-    public UserStateResponse getState(Authentication authentication) {
+    public UserStateResponse getState(
+            @AuthenticationPrincipal AuthUser user
+    ) {
 
-        UUID userId = UUID.fromString(authentication.getName());
+        if (user == null || user.getId() == null) {
+            throw new RuntimeException("User not authenticated properly");
+        }
+
+        UUID userId = user.getId(); // ✅ DIRECT
 
         return service.getUserState(userId);
     }

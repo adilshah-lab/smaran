@@ -21,7 +21,7 @@ public class UserService {
     @Transactional
     public UserEntity getOrCreateUser(AuthUser authUser) {
 
-        UUID userId = UUID.fromString(authUser.getUserId());
+        UUID userId = authUser.getId();
 
         return userRepository.findById(userId)
                 .orElseGet(() -> {
