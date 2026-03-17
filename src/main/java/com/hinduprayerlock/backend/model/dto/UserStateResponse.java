@@ -6,7 +6,7 @@ import java.util.List;
 @Data
 public class UserStateResponse {
 
-    private List<Integer> likedShloks;
+    private List<ShlokDto> likedShloks;
 
     private int totalJaap;
 
