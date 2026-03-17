@@ -9,6 +9,7 @@ import com.hinduprayerlock.backend.repository.LikedShlokRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,10 +26,8 @@ public class UserSyncService {
         this.jaapRepo = jaapRepo;
     }
 
-    // 🔥 MAIN SYNC LOGIC
-    public void syncUserData(Long userId, UserSyncRequest request) {
+    public void syncUserData(UUID userId, UserSyncRequest request) {
 
-        // ✅ 1. MERGE LIKED SHLOKS (NO DELETE)
         for (Integer shlokId : request.getLikedShloks()) {
 
             if (!likedRepo.existsByUserIdAndShlokId(userId, shlokId)) {
@@ -41,7 +40,6 @@ public class UserSyncService {
             }
         }
 
-        // ✅ 2. JAAP MERGE (IMPORTANT)
         JaapStats stats = jaapRepo.findByUserId(userId)
                 .orElseGet(() -> {
                     JaapStats newStats = new JaapStats();
@@ -49,7 +47,6 @@ public class UserSyncService {
                     return newStats;
                 });
 
-        // 🔥 DO NOT OVERWRITE
         stats.setTotalJaap(
                 Math.max(stats.getTotalJaap(), request.getTotalJaap())
         );
@@ -61,8 +58,7 @@ public class UserSyncService {
         jaapRepo.save(stats);
     }
 
-    // ✅ GET STATE
-    public UserStateResponse getUserState(Long userId) {
+    public UserStateResponse getUserState(UUID userId) {
 
         List<Integer> likedIds = likedRepo.findByUserId(userId)
                 .stream()

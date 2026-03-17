@@ -1,9 +1,13 @@
 package com.hinduprayerlock.backend.controller;
 
+import com.hinduprayerlock.backend.model.AuthUser;
 import com.hinduprayerlock.backend.service.LikedShlokService;
+
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/user")
@@ -17,23 +21,31 @@ public class LikedShlokController {
 
     @PostMapping("/liked-shlok")
     public void likeShlok(
-            @RequestParam Long userId,
-            @RequestParam Integer shlokId){
+            @RequestParam Integer shlokId,
+            Authentication authentication
+    ){
+        AuthUser user = (AuthUser) authentication.getPrincipal();
+        UUID userId = UUID.fromString(user.getUserId());
 
         service.likeShlok(userId, shlokId);
     }
 
     @DeleteMapping("/liked-shlok/{shlokId}")
     public void unlikeShlok(
-            @RequestParam Long userId,
-            @PathVariable Integer shlokId){
+            @PathVariable Integer shlokId,
+            Authentication authentication
+    ){
+        AuthUser user = (AuthUser) authentication.getPrincipal();
+        UUID userId = UUID.fromString(user.getUserId());
 
         service.unlikeShlok(userId, shlokId);
     }
 
     @GetMapping("/liked-shloks")
-    public List<Integer> getLikedShloks(
-            @RequestParam Long userId){
+    public List<Integer> getLikedShloks(Authentication authentication){
+
+        AuthUser user = (AuthUser) authentication.getPrincipal();
+        UUID userId = UUID.fromString(user.getUserId());
 
         return service.getLikedShloks(userId);
     }

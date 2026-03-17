@@ -1,10 +1,14 @@
 package com.hinduprayerlock.backend.controller;
 
+import com.hinduprayerlock.backend.model.AuthUser;
 import com.hinduprayerlock.backend.model.dto.UserStateResponse;
 import com.hinduprayerlock.backend.model.dto.UserSyncRequest;
 import com.hinduprayerlock.backend.service.UserSyncService;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/user")
@@ -21,14 +25,20 @@ public class UserSyncController {
             @RequestBody UserSyncRequest request,
             Authentication authentication
     ) {
-        Long userId = Long.parseLong(authentication.getName());
+        AuthUser user = (AuthUser) authentication.getPrincipal();
+
+        UUID userId = UUID.fromString(user.getUserId()); // ✅ FIX
+
         service.syncUserData(userId, request);
     }
 
-    @GetMapping("/state") // ✅ fix endpoint name
+    @GetMapping("/state")
     public UserStateResponse getState(Authentication authentication) {
 
-        Long userId = Long.parseLong(authentication.getName());
+        AuthUser user = (AuthUser) authentication.getPrincipal();
+
+        UUID userId = UUID.fromString(user.getUserId()); // ✅ FIX
+
         return service.getUserState(userId);
     }
 }

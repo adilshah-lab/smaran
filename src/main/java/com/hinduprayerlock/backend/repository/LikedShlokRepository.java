@@ -11,14 +11,11 @@ import java.util.UUID;
 
 public interface LikedShlokRepository extends JpaRepository<LikedShlok, UUID> {
 
-    boolean existsByUserIdAndShlokId(Long userId, Integer shlokId);
+    boolean existsByUserIdAndShlokId(UUID userId, Integer shlokId);
 
-    List<LikedShlok> findByUserId(Long userId);
+    List<LikedShlok> findByUserId(UUID userId);
 
-    void deleteByUserIdAndShlokId(Long userId, Integer shlokId);
-
-    @Query("SELECT l.shlokId FROM LikedShlok l WHERE l.userId = :userId")
-    List<Integer> findShlokIdsByUserId(Long userId);
+    void deleteByUserIdAndShlokId(UUID userId, Integer shlokId);
 }
 
 

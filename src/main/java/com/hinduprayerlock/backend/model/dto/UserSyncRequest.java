@@ -2,11 +2,12 @@ package com.hinduprayerlock.backend.model.dto;
 
 import lombok.Data;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 public class UserSyncRequest {
 
-    private Long userId;
+    private UUID userId;
 
     private List<Integer> likedShloks;
 

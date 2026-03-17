@@ -5,6 +5,7 @@ import com.hinduprayerlock.backend.repository.LikedShlokRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -16,7 +17,7 @@ public class LikedShlokService {
         this.repository = repository;
     }
 
-    public void likeShlok(Long userId, Integer shlokId){
+    public void likeShlok(UUID userId, Integer shlokId){
 
         if (!repository.existsByUserIdAndShlokId(userId, shlokId)) {
 
@@ -28,11 +29,11 @@ public class LikedShlokService {
         }
     }
 
-    public void unlikeShlok(Long userId, Integer shlokId){
+    public void unlikeShlok(UUID userId, Integer shlokId){
         repository.deleteByUserIdAndShlokId(userId, shlokId);
     }
 
-    public List<Integer> getLikedShloks(Long userId){
+    public List<Integer> getLikedShloks(UUID userId){
 
         return repository.findByUserId(userId)
                 .stream()

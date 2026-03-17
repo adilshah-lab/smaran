@@ -14,7 +14,7 @@ public class LikedShlok {
     @GeneratedValue
     private UUID id;
 
-    private Long userId;
+    private UUID userId;
 
     private Integer shlokId;
 }

@@ -8,5 +8,5 @@ import java.util.UUID;
 
 public interface JaapStatsRepository extends JpaRepository<JaapStats, UUID> {
 
-    Optional<JaapStats> findByUserId(Long userId);
+    Optional<JaapStats> findByUserId(UUID userId);
 }

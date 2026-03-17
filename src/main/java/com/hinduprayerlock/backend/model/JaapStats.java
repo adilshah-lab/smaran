@@ -14,7 +14,7 @@ public class JaapStats {
     @GeneratedValue
     private UUID id;
 
-    private Long userId;
+    private UUID userId;
 
     private int totalJaap = 0;
 
