@@ -8,7 +8,8 @@ import com.hinduprayerlock.backend.repository.JaapStatsRepository;
 import com.hinduprayerlock.backend.repository.LikedShlokRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UserSyncService {
@@ -18,54 +19,61 @@ public class UserSyncService {
 
     public UserSyncService(
             LikedShlokRepository likedRepo,
-            JaapStatsRepository jaapRepo) {
-
+            JaapStatsRepository jaapRepo
+    ) {
         this.likedRepo = likedRepo;
         this.jaapRepo = jaapRepo;
     }
 
-    public void syncUserData(UserSyncRequest request) {
+    // 🔥 MAIN SYNC LOGIC
+    public void syncUserData(Long userId, UserSyncRequest request) {
 
-        Long userId = request.getUserId();
+        // ✅ 1. MERGE LIKED SHLOKS (NO DELETE)
+        for (Integer shlokId : request.getLikedShloks()) {
 
-        // Save Jaap stats
+            if (!likedRepo.existsByUserIdAndShlokId(userId, shlokId)) {
+
+                LikedShlok like = new LikedShlok();
+                like.setUserId(userId);
+                like.setShlokId(shlokId);
+
+                likedRepo.save(like);
+            }
+        }
+
+        // ✅ 2. JAAP MERGE (IMPORTANT)
         JaapStats stats = jaapRepo.findByUserId(userId)
-                .orElse(new JaapStats());
+                .orElseGet(() -> {
+                    JaapStats newStats = new JaapStats();
+                    newStats.setUserId(userId);
+                    return newStats;
+                });
 
-        stats.setUserId(userId);
-        stats.setTotalJaap(request.getTotalJaap());
-        stats.setTodayJaap(request.getTodayJaap());
-
-        jaapRepo.save(stats);
-
-        // Save liked shloks
-        likedRepo.deleteByUserId(userId);
-
-        request.getLikedShloks().forEach(shlokId -> {
-
-            LikedShlok like = new LikedShlok();
-            like.setId(UUID.randomUUID());
-            like.setUserId(userId);
-            like.setShlokId(shlokId);
-
-            likedRepo.save(like);
-        });
-    }
-
-    public UserStateResponse getUserState(Long userId){
-
-        UserStateResponse response = new UserStateResponse();
-
-        response.setLikedShloks(
-                likedRepo.findByUserId(userId)
-                        .stream()
-                        .map(LikedShlok::getShlokId)
-                        .toList()
+        // 🔥 DO NOT OVERWRITE
+        stats.setTotalJaap(
+                Math.max(stats.getTotalJaap(), request.getTotalJaap())
         );
 
+        stats.setTodayJaap(
+                Math.max(stats.getTodayJaap(), request.getTodayJaap())
+        );
+
+        jaapRepo.save(stats);
+    }
+
+    // ✅ GET STATE
+    public UserStateResponse getUserState(Long userId) {
+
+        List<Integer> likedIds = likedRepo.findByUserId(userId)
+                .stream()
+                .map(LikedShlok::getShlokId)
+                .collect(Collectors.toList());
+
         JaapStats stats = jaapRepo.findByUserId(userId)
                 .orElse(new JaapStats());
 
+        UserStateResponse response = new UserStateResponse();
+        response.setLikedShloks(likedIds);
         response.setTotalJaap(stats.getTotalJaap());
         response.setTodayJaap(stats.getTodayJaap());
 

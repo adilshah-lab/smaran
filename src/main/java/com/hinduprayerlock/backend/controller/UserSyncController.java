@@ -2,10 +2,9 @@ package com.hinduprayerlock.backend.controller;
 
 import com.hinduprayerlock.backend.model.dto.UserStateResponse;
 import com.hinduprayerlock.backend.model.dto.UserSyncRequest;
-import org.springframework.web.bind.annotation.*;
-
-
 import com.hinduprayerlock.backend.service.UserSyncService;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/user")
@@ -18,13 +17,18 @@ public class UserSyncController {
     }
 
     @PostMapping("/sync")
-    public void sync(@RequestBody UserSyncRequest request) {
-        service.syncUserData(request);
+    public void sync(
+            @RequestBody UserSyncRequest request,
+            Authentication authentication
+    ) {
+        Long userId = Long.parseLong(authentication.getName());
+        service.syncUserData(userId, request);
     }
 
-    @GetMapping("/states")
-    public UserStateResponse getState(@RequestParam Long userId) {
+    @GetMapping("/state") // ✅ fix endpoint name
+    public UserStateResponse getState(Authentication authentication) {
+
+        Long userId = Long.parseLong(authentication.getName());
         return service.getUserState(userId);
     }
 }
-
