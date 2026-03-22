@@ -1,0 +1,5 @@
+build/*
+!build/libs/*.jar
+.git
+.gitignore
+build/
