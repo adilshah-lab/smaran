@@ -1,4 +1,4 @@
-FROM openjdk:21-jdk-slim
+FROM eclipse-temurin:21-jdk
 
 WORKDIR /app
 
@@ -6,4 +6,4 @@ COPY . .
 
 RUN ./gradlew build
 
-ENTRYPOINT ["java", "-jar", "build/libs/*.jar"]
+ENTRYPOINT ["sh", "-c", "java -jar build/libs/*.jar"]
