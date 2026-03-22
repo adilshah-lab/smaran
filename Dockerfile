@@ -6,7 +6,6 @@ COPY . .
 
 RUN chmod +x gradlew
 
-# ✅ SKIP TESTS
 RUN ./gradlew build -x test
 
-ENTRYPOINT ["sh", "-c", "java -jar build/libs/*.jar"]
+ENTRYPOINT ["java", "-jar", "build/libs/prayer-lock-backend-0.0.1-SNAPSHOT.jar"]
