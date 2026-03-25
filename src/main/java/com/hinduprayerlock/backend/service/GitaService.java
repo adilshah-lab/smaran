@@ -183,4 +183,21 @@ public class GitaService {
 
                 }).toList();
     }
+
+    public NextVerseResponse getVerse(UUID userId, int chapter, int verse) {
+
+        Verse v = verseRepository
+                .findByChapterNumberAndVerseNumber(chapter, verse)
+                .orElseThrow(() -> new RuntimeException("Verse not found"));
+
+        return new NextVerseResponse(
+                v.getChapterNumber(),
+                v.getVerseNumber(),
+                v.getVerseLabel(),
+                v.getSanskrit(),
+                v.getHindi(),
+                v.getEnglish(),
+                false
+        );
+    }
 }

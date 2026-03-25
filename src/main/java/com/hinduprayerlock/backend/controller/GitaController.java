@@ -123,4 +123,19 @@ public class GitaController {
 
         return gitaService.getSavedVerses(userId);
     }
+
+    // ================================
+    // ✅ 8. Get Verse by Chapter + Verse
+    // ================================
+    @GetMapping("/verse")
+    public NextVerseResponse getVerse(
+            Authentication auth,
+            @RequestParam int chapter,
+            @RequestParam int verse
+    ) {
+
+        UUID userId = getUserId(auth);
+
+        return gitaService.getVerse(userId, chapter, verse);
+    }
 }
