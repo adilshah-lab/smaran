@@ -25,7 +25,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                .cors(cors -> {}) // ✅ ENABLE CORS
+                .cors(cors -> {}) // ✅ Enable CORS
                 .csrf(csrf -> csrf.disable())
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
@@ -34,9 +34,10 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
 
-                        // ✅ Allow preflight requests
+                        // ✅ Allow preflight (VERY IMPORTANT)
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                        // ✅ Public APIs
                         .requestMatchers(
                                 "/auth/login",
                                 "/auth/register",
@@ -47,11 +48,11 @@ public class SecurityConfig {
                                 "/api/mood/**"
                         ).permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/api/mood").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/mood").permitAll()
+                        // ✅ Role-based
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/subscription/**").authenticated()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/subscription/**").authenticated()
+
 
                         .requestMatchers("/api/**")
                         .hasAnyRole("USER", "GUEST", "ADMIN")
@@ -63,14 +64,18 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // ✅ GLOBAL CORS CONFIG
+    // ✅ FINAL CORS CONFIG (WORKS FOR ALL)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of(
-                "https://www.smaraan.com",
-                "http://localhost:3000"
+        // ✅ IMPORTANT: use allowedOriginPatterns (not allowedOrigins)
+        configuration.setAllowedOriginPatterns(List.of(
+                "https://www.smaraan.com",     //  production website
+                "http://localhost:*",          //  local dev (any port)
+                "http://127.0.0.1:*",          //  local alternative
+                "chrome-extension://*",        //  chrome extension
+                "*"                           //  Android / others
         ));
 
         configuration.setAllowedMethods(List.of(
@@ -78,6 +83,8 @@ public class SecurityConfig {
         ));
 
         configuration.setAllowedHeaders(List.of("*"));
+
+        // ⚠️ IMPORTANT: allow credentials only if needed
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
