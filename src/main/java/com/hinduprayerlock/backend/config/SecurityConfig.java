@@ -47,6 +47,8 @@ public class SecurityConfig {
                                 "/api/mood/**"
                         ).permitAll()
 
+                        .requestMatchers(HttpMethod.GET, "/api/mood").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/mood").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/subscription/**").authenticated()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
