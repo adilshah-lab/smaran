@@ -25,7 +25,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                .cors(cors -> {}) // ✅ Enable CORS
+                .cors(cors -> {
+                }) // ✅ Enable CORS
                 .csrf(csrf -> csrf.disable())
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
@@ -69,13 +70,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // ✅ IMPORTANT: use allowedOriginPatterns (not allowedOrigins)
         configuration.setAllowedOriginPatterns(List.of(
-                "https://www.smaraan.com",     //  production website
-                "http://localhost:*",          //  local dev (any port)
-                "http://127.0.0.1:*",          //  local alternative
-                "chrome-extension://*",        //  chrome extension
-                "*"                           //  Android / others
+                "https://www.smaraan.com",   // 🌐 production
+                "http://localhost:*",        // 💻 dev
+                "http://127.0.0.1:*",        // 💻 dev alt
+                "chrome-extension://*"       // 🧩 extension
         ));
 
         configuration.setAllowedMethods(List.of(
@@ -84,7 +83,7 @@ public class SecurityConfig {
 
         configuration.setAllowedHeaders(List.of("*"));
 
-        // ⚠️ IMPORTANT: allow credentials only if needed
+        // ✅ Keep this TRUE because JWT may use headers/cookies
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
