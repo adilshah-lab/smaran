@@ -3,14 +3,8 @@ package com.hinduprayerlock.backend.service;
 import com.hinduprayerlock.backend.ai.dto.ChapterResponse;
 import com.hinduprayerlock.backend.ai.dto.NextVerseResponse;
 import com.hinduprayerlock.backend.ai.dto.VerseResponse;
-import com.hinduprayerlock.backend.model.Chapter;
-import com.hinduprayerlock.backend.model.SavedVerse;
-import com.hinduprayerlock.backend.model.UserProgress;
-import com.hinduprayerlock.backend.model.Verse;
-import com.hinduprayerlock.backend.repository.ChapterRepository;
-import com.hinduprayerlock.backend.repository.SavedVerseRepository;
-import com.hinduprayerlock.backend.repository.UserProgressRepository;
-import com.hinduprayerlock.backend.repository.VerseRepository;
+import com.hinduprayerlock.backend.model.*;
+import com.hinduprayerlock.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +26,9 @@ public class GitaService {
 
     @Autowired
     private SavedVerseRepository savedVerseRepository;
+
+    @Autowired
+    private OverlayProgressRepository overlayProgressRepository;
 
 
     // ✅ 1. Chapters with progress
@@ -78,44 +75,53 @@ public class GitaService {
     // ✅ 3. Next verse (core logic)
     public NextVerseResponse getNextVerse(UUID userId) {
 
-        UserProgress progress = progressRepository
-                .findTopByUserIdOrderByChapterNumberDesc(userId)
+        OverlayProgress progress = overlayProgressRepository
+                .findByUserId(userId)
                 .orElse(null);
 
         int chapter = 1;
-        int lastVerse = 0;
+        int verse = 1;
         boolean isNewChapter = false;
 
         if (progress != null) {
-            chapter = progress.getChapterNumber();
-            lastVerse = progress.getLastReadVerse();
+            chapter = progress.getCurrentChapter();
+            verse = progress.getCurrentVerse();
         }
 
         Chapter ch = chapterRepository
                 .findByChapterNumber(chapter)
                 .orElseThrow();
 
-        if (lastVerse >= ch.getVersesCount()) {
+        if (verse >= ch.getVersesCount()) {
             chapter++;
-            lastVerse = 0;
+            verse = 1;
             isNewChapter = true;
 
             if (chapter > 18) return null;
+        } else {
+            verse++;
         }
 
-        Verse verse = verseRepository
-                .findFirstByChapterNumberAndVerseNumberGreaterThanOrderByVerseNumberAsc(
-                        chapter, lastVerse
-                )
+        // SAVE NEW POSITION
+        OverlayProgress newProgress = progress != null ? progress : new OverlayProgress();
+
+        newProgress.setUserId(userId);
+        newProgress.setCurrentChapter(chapter);
+        newProgress.setCurrentVerse(verse);
+
+        overlayProgressRepository.save(newProgress);
+
+        Verse v = verseRepository
+                .findByChapterNumberAndVerseNumber(chapter, verse)
                 .orElseThrow();
 
         return new NextVerseResponse(
                 chapter,
-                verse.getVerseNumber(),
-                verse.getVerseLabel(),
-                verse.getSanskrit(),
-                verse.getHindi(),
-                verse.getEnglish(),
+                verse,
+                v.getVerseLabel(),
+                v.getSanskrit(),
+                v.getHindi(),
+                v.getEnglish(),
                 isNewChapter
         );
     }
