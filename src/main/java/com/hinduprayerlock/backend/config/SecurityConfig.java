@@ -35,25 +35,23 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
 
-                        // ✅ Allow preflight (VERY IMPORTANT)
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // ✅ Public APIs
-                        .requestMatchers(
-                                "/api/auth/**",
-                                "/auth/guest",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/v3/api-docs/**",
-                                "/api/mood/**"
-                        ).permitAll()
+                        // ✅ AUTH (your actual endpoints)
+                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
+                        .requestMatchers("/auth/guest").permitAll()
 
-                        // ✅ Role-based
+                        // ✅ PUBLIC
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/api/mood/**").permitAll()
+
+                        // ✅ ROLE BASED
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/subscription/**").authenticated()
 
-
+                        // ✅ PROTECTED APIs
                         .requestMatchers("/api/**")
                         .hasAnyRole("USER", "GUEST", "ADMIN")
 
