@@ -2,6 +2,7 @@ package com.hinduprayerlock.backend.controller;
 
 
 import com.hinduprayerlock.backend.ai.dto.AuthResponse;
+import com.hinduprayerlock.backend.ai.dto.GoogleAuthRequest;
 import com.hinduprayerlock.backend.ai.dto.LoginResponse;
 import com.hinduprayerlock.backend.ai.dto.RegisterRequest;
 import com.hinduprayerlock.backend.model.UserEntity;
@@ -89,5 +90,14 @@ public class AuthController {
         UserResponse user = authService.updateUser(UUID.fromString(userId), request);
 
         return ResponseEntity.ok(user);
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<LoginResponse> googleLogin(
+            @RequestBody GoogleAuthRequest request
+    ) {
+        return ResponseEntity.ok(
+                authService.googleLogin(request.getIdToken())
+        );
     }
 }

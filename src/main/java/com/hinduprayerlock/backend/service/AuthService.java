@@ -1,18 +1,20 @@
 package com.hinduprayerlock.backend.service;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.hinduprayerlock.backend.ai.dto.AuthResponse;
 import com.hinduprayerlock.backend.ai.dto.LoginResponse;
 import com.hinduprayerlock.backend.ai.dto.RegisterRequest;
 import com.hinduprayerlock.backend.exceptions.EmailAlreadyExistsException;
 import com.hinduprayerlock.backend.exceptions.InvalidCredentialsException;
-import com.hinduprayerlock.backend.exceptions.PhoneAlreadyExistsException;
 import com.hinduprayerlock.backend.exceptions.ResourceNotFoundException;
 import com.hinduprayerlock.backend.model.UserEntity;
 import com.hinduprayerlock.backend.model.dto.LoginRequest;
 import com.hinduprayerlock.backend.model.dto.UpdateUserRequest;
 import com.hinduprayerlock.backend.model.dto.UserResponse;
 import com.hinduprayerlock.backend.repository.UserRepository;
+import com.hinduprayerlock.backend.utils.GoogleTokenVerifier;
 import com.hinduprayerlock.backend.utils.JwtUtil;
+
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,6 +31,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final GoogleTokenVerifier googleTokenVerifier;
 
     public AuthResponse register(RegisterRequest request) {
 
@@ -36,15 +39,15 @@ public class AuthService {
             throw new EmailAlreadyExistsException("Email already registered");
         }
 
-        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
-            throw new PhoneAlreadyExistsException("Phone number already registered");
-        }
+//        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+//            throw new PhoneAlreadyExistsException("Phone number already registered");
+//        }
 
         UserEntity user = new UserEntity();
         user.setId(UUID.randomUUID());
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
-        user.setPhoneNumber(request.getPhoneNumber());
+//        user.setPhoneNumber(request.getPhoneNumber());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setCreatedAt(LocalDateTime.now());
         user.setIsSubscribed(false);
@@ -105,17 +108,17 @@ public class AuthService {
             user.setUsername(request.getUsername().trim());
         }
 
-        if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
-
-            Optional<UserEntity> existingUser =
-                    userRepository.findByPhoneNumber(request.getPhoneNumber());
-
-            if (existingUser.isPresent() && !existingUser.get().getId().equals(userId)) {
-                throw new PhoneAlreadyExistsException("Phone number already in use");
-            }
-
-            user.setPhoneNumber(request.getPhoneNumber().trim());
-        }
+//        if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
+//
+//            Optional<UserEntity> existingUser =
+//                    userRepository.findByPhoneNumber(request.getPhoneNumber());
+//
+//            if (existingUser.isPresent() && !existingUser.get().getId().equals(userId)) {
+//                throw new PhoneAlreadyExistsException("Phone number already in use");
+//            }
+//
+//            user.setPhoneNumber(request.getPhoneNumber().trim());
+//        }
 
         userRepository.save(user);
 
@@ -128,10 +131,49 @@ public class AuthService {
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
-                user.getPhoneNumber(),
+//                user.getPhoneNumber(),
                 user.getIsSubscribed(),
                 user.getCreatedAt()
         );
 
+    }
+
+    public LoginResponse googleLogin(String idToken) {
+
+        GoogleIdToken.Payload payload = googleTokenVerifier.verify(idToken);
+
+        String email = payload.getEmail();
+        String name = (String) payload.get("name");
+
+        Optional<UserEntity> optionalUser = userRepository.findByEmail(email);
+
+        UserEntity user;
+
+        if (optionalUser.isPresent()) {
+            user = optionalUser.get();
+        } else {
+            user = new UserEntity();
+            user.setId(UUID.randomUUID());
+            user.setEmail(email);
+            user.setUsername(name);
+            user.setPassword(null);
+            user.setProvider("GOOGLE");
+            user.setCreatedAt(LocalDateTime.now());
+            user.setIsSubscribed(false);
+
+            userRepository.save(user);
+        }
+
+        String token = jwtUtil.generateToken(
+                user.getId().toString(),
+                user.getEmail(),
+                "USER"
+        );
+
+        return new LoginResponse(
+                token,
+                user.getUsername(),
+                user.getEmail()
+        );
     }
 }

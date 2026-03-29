@@ -42,4 +42,8 @@ public class UserEntity {
 
     @Column(nullable = false)
     private Boolean isSubscribed = false;
+    
+    //    google or normal
+    private String provider;
+
 }
