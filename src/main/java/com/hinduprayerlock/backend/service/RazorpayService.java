@@ -1,7 +1,10 @@
 package com.hinduprayerlock.backend.service;
 
+import com.hinduprayerlock.backend.model.Subscription;
 import com.hinduprayerlock.backend.model.SubscriptionProvider;
+import com.hinduprayerlock.backend.model.SubscriptionStatus;
 import com.hinduprayerlock.backend.model.dto.SubscriptionData;
+import com.hinduprayerlock.backend.repository.SubscriptionRepository;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import lombok.RequiredArgsConstructor;
@@ -29,9 +32,10 @@ public class RazorpayService {
     private String webhookSecret;
 
     private final SubscriptionService subscriptionService;
+    private final SubscriptionRepository subscriptionRepository;
 
     /**
-     * ✅ Create Order (Frontend will call this)
+     * ✅ Create Order
      */
     public JSONObject createOrder(int amount, String receiptId, String userId) {
 
@@ -43,7 +47,6 @@ public class RazorpayService {
             orderRequest.put("currency", "INR");
             orderRequest.put("receipt", receiptId);
 
-            // 🔥 IMPORTANT: Attach userId
             JSONObject notes = new JSONObject();
             notes.put("userId", userId);
 
@@ -59,7 +62,7 @@ public class RazorpayService {
     }
 
     /**
-     * ✅ Verify Payment Signature (MANDATORY)
+     * ✅ Verify Payment Signature
      */
     public boolean verifyPaymentSignature(
             String orderId,
@@ -69,7 +72,6 @@ public class RazorpayService {
 
         try {
             String payload = orderId + "|" + paymentId;
-
             String generatedSignature = hmacSha256(payload, secret);
 
             return generatedSignature.equals(razorpaySignature);
@@ -80,13 +82,12 @@ public class RazorpayService {
     }
 
     /**
-     * ✅ Verify Webhook Signature (VERY IMPORTANT FOR PRODUCTION)
+     * ✅ Verify Webhook Signature
      */
     public boolean verifyWebhookSignature(String payload, String actualSignature) {
 
         try {
             String expectedSignature = hmacSha256(payload, webhookSecret);
-
             return expectedSignature.equals(actualSignature);
 
         } catch (Exception e) {
@@ -99,14 +100,14 @@ public class RazorpayService {
      */
     public void processWebhook(String payload, String signature) {
 
-        // Step 1: Verify webhook authenticity
         if (!verifyWebhookSignature(payload, signature)) {
             throw new RuntimeException("Invalid webhook signature");
         }
 
         JSONObject json = new JSONObject(payload);
-
         String event = json.getString("event");
+
+        System.out.println("Webhook Event: " + event);
 
         switch (event) {
 
@@ -132,7 +133,7 @@ public class RazorpayService {
     }
 
     /**
-     * ✅ Handle successful payment (ONE-TIME PAYMENT)
+     * ✅ Handle successful payment
      */
     private void handlePaymentCaptured(JSONObject json) {
 
@@ -143,7 +144,11 @@ public class RazorpayService {
 
         String paymentId = paymentEntity.getString("id");
 
-        // 🔥 Extract userId from notes
+        // 🔥 Prevent duplicate processing
+        if (subscriptionRepository.findByRazorpayPaymentId(paymentId).isPresent()) {
+            return;
+        }
+
         String userId = paymentEntity
                 .getJSONObject("notes")
                 .getString("userId");
@@ -174,8 +179,6 @@ public class RazorpayService {
         String paymentId = paymentEntity.getString("id");
 
         System.out.println("Payment Failed: " + paymentId);
-
-        // You can log or notify user
     }
 
     /**
@@ -190,9 +193,24 @@ public class RazorpayService {
 
         String subscriptionId = subEntity.getString("id");
 
-        System.out.println("Subscription Charged: " + subscriptionId);
+        Subscription sub = subscriptionRepository
+                .findByRazorpaySubscriptionId(subscriptionId)
+                .orElseThrow(() -> new RuntimeException("Subscription not found"));
 
-        // Update expiry / extend plan
+        // 🔥 FIX: Use plan duration (not snapshot)
+        int duration = sub.getPlan().getDurationInDays();
+
+        // 🔥 Safe extension
+        LocalDateTime baseTime = sub.getExpiryTime().isAfter(LocalDateTime.now())
+                ? sub.getExpiryTime()
+                : LocalDateTime.now();
+
+        sub.setExpiryTime(baseTime.plusDays(duration));
+        sub.setStatus(SubscriptionStatus.ACTIVE);
+
+        subscriptionRepository.save(sub);
+
+        subscriptionService.updateUserSubscriptionFlag(sub.getUserId(), true);
     }
 
     /**
@@ -209,7 +227,16 @@ public class RazorpayService {
 
         System.out.println("Subscription Cancelled: " + subscriptionId);
 
-        // Mark subscription as cancelled in DB
+        Subscription sub = subscriptionRepository
+                .findByRazorpaySubscriptionId(subscriptionId)
+                .orElseThrow(() -> new RuntimeException("Subscription not found"));
+
+        sub.setStatus(SubscriptionStatus.CANCELLED);
+        sub.setAutoRenewing(false);
+
+        subscriptionRepository.save(sub);
+
+        subscriptionService.updateUserSubscriptionFlag(sub.getUserId(), true);
     }
 
     /**

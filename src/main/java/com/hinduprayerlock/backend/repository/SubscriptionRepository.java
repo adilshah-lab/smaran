@@ -21,5 +21,7 @@ public interface SubscriptionRepository
 
     List<Subscription> findByUserId(UUID userId);
 
+    Optional<Subscription> findByRazorpaySubscriptionId(String razorpaySubscriptionId);
+
 
 }

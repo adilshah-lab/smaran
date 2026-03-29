@@ -20,5 +20,7 @@ public class SubscriptionData {
 
     private LocalDateTime expiryTime;
 
+    private String subscriptionId;
+
     private boolean autoRenewing;
 }

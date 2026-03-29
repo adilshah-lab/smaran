@@ -124,8 +124,11 @@ public class SubscriptionService {
 
             Subscription sub = existingSub.get();
 
-            LocalDateTime newExpiry = sub.getExpiryTime()
-                    .plusDays(plan.getDurationInDays());
+            LocalDateTime baseTime = sub.getExpiryTime().isAfter(LocalDateTime.now())
+                    ? sub.getExpiryTime()
+                    : LocalDateTime.now();
+
+            LocalDateTime newExpiry = baseTime.plusDays(plan.getDurationInDays());
 
             sub.setExpiryTime(newExpiry);
             sub.setPlan(plan);
@@ -144,10 +147,14 @@ public class SubscriptionService {
             sub.setUserId(userId);
             sub.setProductId(plan.getName());
             sub.setProvider(data.getProvider());
+            System.out.println("Saving subscription for user: " + userId);
             sub.setPlan(plan);
 
             if (data.getProvider() == SubscriptionProvider.RAZORPAY) {
                 sub.setRazorpayPaymentId(data.getTransactionId());
+
+                // 🔥 IMPORTANT (add this)
+                sub.setRazorpaySubscriptionId(data.getSubscriptionId());
             }
 
             sub.setAmount(plan.getPrice());
