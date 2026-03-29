@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/admin/moods")
+@RequestMapping("/api/admin/moods")
 @RequiredArgsConstructor
 public class AdminMoodController {
 

@@ -36,29 +36,42 @@ public class SubscriptionController {
         return ResponseEntity.ok("Subscription Verified");
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<?> getMySubscription(Authentication authentication) {
+//    @GetMapping("/me")
+//    public ResponseEntity<?> getMySubscription(Authentication authentication) {
+//
+//        String email = authentication.getName();
+//
+//        UserEntity user = userRepository.findByEmail(email)
+//                .orElseThrow(() -> new RuntimeException("User not found"));
+//
+//        return ResponseEntity.ok(
+//                subscriptionService.getUserSubscription(user.getId())
+//        );
+//    }
+
+//    @GetMapping("/status")
+//    public ResponseEntity<?> checkPremium(Authentication authentication) {
+//
+//        String email = authentication.getName();
+//
+//        UserEntity user = userRepository.findByEmail(email)
+//                .orElseThrow(() -> new RuntimeException("User not found"));
+//
+//        return ResponseEntity.ok(
+//                subscriptionService.isPremium(user.getId())
+//        );
+//    }
+
+    @PostMapping("/cancel")
+    public ResponseEntity<?> cancelSubscription(Authentication authentication) {
 
         String email = authentication.getName();
 
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return ResponseEntity.ok(
-                subscriptionService.getUserSubscription(user.getId())
-        );
-    }
+        subscriptionService.cancelSubscription(user.getId());
 
-    @GetMapping("/status")
-    public ResponseEntity<?> checkPremium(Authentication authentication) {
-
-        String email = authentication.getName();
-
-        UserEntity user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        return ResponseEntity.ok(
-                subscriptionService.isPremium(user.getId())
-        );
+        return ResponseEntity.ok("Subscription cancelled");
     }
 }

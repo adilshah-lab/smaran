@@ -41,4 +41,41 @@ public class AdminSubscriptionController {
                 subscriptionService.getUserSubscription(userId)  // ✅ pass variable
         );
     }
+
+    @GetMapping("/analytics/revenue")
+    public ResponseEntity<?> getRevenue() {
+
+        double total = subscriptionService.calculateRevenue();
+
+        return ResponseEntity.ok(total);
+    }
+
+    @GetMapping("/analytics/active-users")
+    public ResponseEntity<?> getActiveUsers() {
+
+        long count = subscriptionService.getActiveUserCount();
+
+        return ResponseEntity.ok(count);
+    }
+
+    @GetMapping("/analytics/plan-stats")
+    public ResponseEntity<?> getPlanStats() {
+
+        return ResponseEntity.ok(subscriptionService.getPlanStats());
+    }
+
+    @GetMapping("/analytics/expiring-soon")
+    public ResponseEntity<?> expiringSoon() {
+
+        return ResponseEntity.ok(subscriptionService.getExpiringSubscriptions());
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<?> filterByStatus(
+            @RequestParam SubscriptionStatus status
+    ) {
+        return ResponseEntity.ok(
+                subscriptionService.getByStatus(status)
+        );
+    }
 }

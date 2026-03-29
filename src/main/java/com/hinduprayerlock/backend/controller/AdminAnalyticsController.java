@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/admin/analytics")
+@RequestMapping("/api/admin/analytics")
 @RequiredArgsConstructor
 public class AdminAnalyticsController {
 

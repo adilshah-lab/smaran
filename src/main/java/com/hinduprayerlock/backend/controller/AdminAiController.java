@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/admin/ai")
+@RequestMapping("/api/admin/ai")
 @RequiredArgsConstructor
 public class AdminAiController {
 

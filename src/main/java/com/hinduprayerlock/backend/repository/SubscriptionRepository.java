@@ -16,4 +16,10 @@ public interface SubscriptionRepository
     Optional<Subscription> findByPurchaseToken(String purchaseToken);
 
     List<Subscription> findByStatus(SubscriptionStatus status);
+
+    Optional<Subscription> findByRazorpayPaymentId(String paymentId);
+
+    List<Subscription> findByUserId(UUID userId);
+
+
 }

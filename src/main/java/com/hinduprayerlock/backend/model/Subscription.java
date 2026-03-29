@@ -7,7 +7,11 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "subscriptions")
+@Table(name = "subscriptions", indexes = {
+        @Index(name = "idx_user_id", columnList = "userId"),
+        @Index(name = "idx_status", columnList = "status"),
+        @Index(name = "idx_expiry", columnList = "expiryTime")
+})
 @Data
 public class Subscription {
 
@@ -19,7 +23,8 @@ public class Subscription {
 
     private String productId;
 
-    @Column(columnDefinition = "TEXT")
+    // Google fields
+    @Column(columnDefinition = "TEXT", unique = true)
     private String purchaseToken;
 
     private String orderId;
@@ -27,9 +32,31 @@ public class Subscription {
     @Enumerated(EnumType.STRING)
     private SubscriptionStatus status;
 
-    private LocalDateTime startTime;
+    @Enumerated(EnumType.STRING)
+    private SubscriptionProvider provider;
 
+    // Razorpay fields
+    @Column(unique = true)
+    private String razorpayPaymentId;
+
+    private String razorpaySubscriptionId;
+
+    // Plan relation
+    @ManyToOne
+    @JoinColumn(name = "plan_id")
+    private Plan plan;
+
+    private Double amount;
+
+    // 🔥 Snapshot (VERY IMPORTANT)
+    private String planName;
+    private Integer durationDays;
+
+    private LocalDateTime startTime;
     private LocalDateTime expiryTime;
 
     private Boolean autoRenewing;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }
