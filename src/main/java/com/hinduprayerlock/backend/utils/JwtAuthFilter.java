@@ -38,13 +38,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         String method = request.getMethod();
 
-        System.out.println("🔥 FILTER HIT: " + method + " " + path);
 
         String header = request.getHeader("Authorization");
 
         // ✅ No token → continue (important)
         if (header == null || !header.startsWith("Bearer ")) {
-            System.out.println("❌ NO TOKEN → allowing request");
             filterChain.doFilter(request, response);
             return;
         }
@@ -95,7 +93,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             // ❌ Token invalid → clear context
             SecurityContextHolder.clearContext();
-            System.out.println("❌ TOKEN INVALID: " + e.getMessage());
+
 
 
         }

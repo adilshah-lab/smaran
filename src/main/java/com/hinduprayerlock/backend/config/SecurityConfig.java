@@ -62,16 +62,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((req, res, e) -> {
-                            System.out.println("❌ AUTH ENTRY POINT: " + req.getRequestURI());
-                            res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-                        })
-                        .accessDeniedHandler((req, res, e) -> {
-                            System.out.println("❌ ACCESS DENIED: " + req.getRequestURI());
-                            res.sendError(HttpServletResponse.SC_FORBIDDEN);
-                        })
-                )
+
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
