@@ -42,7 +42,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
                         .requestMatchers("/api/v1/auth/guest").permitAll()
 
-                        //
                         .requestMatchers("/api/v1/auth/**").authenticated()
 
                         // ✅ PUBLIC
@@ -53,9 +52,11 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/subscription/**").authenticated()
+                        .requestMatchers("/api/v1/users/**").authenticated()
+                        .requestMatchers("/api/v1/tracking/**").authenticated()
 
-                        .requestMatchers("/api/v1/**")
-                        .hasAnyRole("USER", "GUEST", "ADMIN")
+//                        .requestMatchers("/api/v1/**")
+//                        .hasAnyRole("USER", "GUEST", "ADMIN")
 
                         .anyRequest().authenticated()
                 )
