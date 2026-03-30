@@ -1,6 +1,7 @@
 package com.hinduprayerlock.backend.config;
 
 import com.hinduprayerlock.backend.utils.JwtAuthFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -59,6 +60,17 @@ public class SecurityConfig {
 //                        .hasAnyRole("USER", "GUEST", "ADMIN")
 
                         .anyRequest().authenticated()
+                )
+
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) -> {
+                            System.out.println("❌ AUTH ENTRY POINT: " + req.getRequestURI());
+                            res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                        })
+                        .accessDeniedHandler((req, res, e) -> {
+                            System.out.println("❌ ACCESS DENIED: " + req.getRequestURI());
+                            res.sendError(HttpServletResponse.SC_FORBIDDEN);
+                        })
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
