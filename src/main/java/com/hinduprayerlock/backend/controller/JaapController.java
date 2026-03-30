@@ -1,10 +1,11 @@
 package com.hinduprayerlock.backend.controller;
 
 import com.hinduprayerlock.backend.service.JaapService;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/api/v1/tracking/jaap")
 public class JaapController {
 
     private final JaapService service;
@@ -13,18 +14,19 @@ public class JaapController {
         this.service = service;
     }
 
-    @PostMapping("/jaap")
+    @PostMapping
     public void addJaap(
-            @RequestParam String userId,
-            @RequestParam Integer count){
-
+            @RequestParam Integer count,
+            Authentication auth
+    ){
+        String userId = auth.getName();
         service.addJaap(userId, count);
     }
 
-    @GetMapping("/jaap")
-    public Integer getTodayJaap(
-            @RequestParam String userId){
+    @GetMapping("/today")
+    public Integer getTodayJaap(Authentication auth) {
 
+        String userId = auth.getName(); // or extract from JWT
         return service.getToday(userId);
     }
 }

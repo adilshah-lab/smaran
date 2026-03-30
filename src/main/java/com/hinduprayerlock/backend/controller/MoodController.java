@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/mood")
+@RequestMapping("/api/v1/mood")
 @RequiredArgsConstructor
 public class MoodController {
 

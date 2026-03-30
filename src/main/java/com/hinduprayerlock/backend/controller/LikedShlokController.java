@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/v1/users/me/liked-shloks")
 public class LikedShlokController {
 
     private final LikedShlokService service;
@@ -19,7 +19,7 @@ public class LikedShlokController {
         this.service = service;
     }
 
-    @PostMapping("/liked-shlok")
+    @PostMapping("/{shlokId}")
     public void likeShlok(
             @RequestParam Integer shlokId,
             Authentication authentication
@@ -30,7 +30,7 @@ public class LikedShlokController {
         service.likeShlok(userId, shlokId);
     }
 
-    @DeleteMapping("/liked-shlok/{shlokId}")
+    @DeleteMapping("/{shlokId}")
     public void unlikeShlok(
             @PathVariable Integer shlokId,
             Authentication authentication
@@ -41,7 +41,7 @@ public class LikedShlokController {
         service.unlikeShlok(userId, shlokId);
     }
 
-    @GetMapping("/liked-shloks")
+    @GetMapping
     public List<Integer> getLikedShloks(Authentication authentication){
 
         AuthUser user = (AuthUser) authentication.getPrincipal();

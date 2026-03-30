@@ -10,7 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/subscription")
+@RequestMapping("/api/v1/subscription")
 @RequiredArgsConstructor
 public class SubscriptionController {
 

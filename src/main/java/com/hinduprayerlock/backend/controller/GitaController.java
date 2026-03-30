@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/gita")
+@RequestMapping("/api/v1/content/gita")
 public class GitaController {
 
     @Autowired

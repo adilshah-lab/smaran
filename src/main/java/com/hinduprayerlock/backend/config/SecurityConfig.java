@@ -38,22 +38,23 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // ✅ AUTH (your actual endpoints)
-                        .requestMatchers(HttpMethod.POST, "api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "api/auth/register").permitAll()
-                        .requestMatchers("/api/auth/guest").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
+                        .requestMatchers("/api/v1/auth/guest").permitAll()
+
+                        //
+                        .requestMatchers("/api/v1/auth/**").authenticated()
 
                         // ✅ PUBLIC
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/api/mood/**").permitAll()
-                        .requestMatchers("/api/track/**").permitAll()
-                        .requestMatchers("/api/plans/**").permitAll()
+                        .requestMatchers("/api/v1/mood/**").permitAll()
+                        .requestMatchers("/api/v1/track/**").permitAll()
+                        .requestMatchers("/api/v1/plans/**").permitAll()
 
-                        // ✅ ROLE BASED
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/subscription/**").authenticated()
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/subscription/**").authenticated()
 
-                        // ✅ PROTECTED APIs
-                        .requestMatchers("/api/**")
+                        .requestMatchers("/api/v1/**")
                         .hasAnyRole("USER", "GUEST", "ADMIN")
 
                         .anyRequest().authenticated()

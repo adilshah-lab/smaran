@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/subscription")
+@RequestMapping("/api/v1/common/subscription")
 @RequiredArgsConstructor
 public class CommonSubscriptionController {
 

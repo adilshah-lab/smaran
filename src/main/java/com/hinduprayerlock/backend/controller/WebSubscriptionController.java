@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 @RestController
-@RequestMapping("/web/subscription")
+@RequestMapping("/api/v1/web/subscription")
 @RequiredArgsConstructor
 public class WebSubscriptionController {
 

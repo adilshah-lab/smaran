@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/track")
+@RequestMapping("/api/v1/track")
 @RequiredArgsConstructor
 public class TrackController {
 
