@@ -42,7 +42,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
                         .requestMatchers("/api/v1/auth/guest").permitAll()
 
-                        .requestMatchers("/api/v1/auth/**").authenticated()
+//                        .requestMatchers("/api/v1/auth/**").authenticated()
 
                         // ✅ PUBLIC
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
