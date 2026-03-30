@@ -4,7 +4,7 @@ import com.hinduprayerlock.backend.service.JaapService;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/user")
 public class JaapController {
 
     private final JaapService service;

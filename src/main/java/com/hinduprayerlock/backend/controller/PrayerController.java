@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/prayer")
+@RequestMapping("/prayer")
 @RequiredArgsConstructor
 public class PrayerController {
 

@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/admin/prayers")
+@RequestMapping("/admin/prayers")
 @RequiredArgsConstructor
 public class AdminPrayerController {
 

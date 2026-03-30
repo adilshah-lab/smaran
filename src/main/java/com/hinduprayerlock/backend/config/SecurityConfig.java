@@ -38,9 +38,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // ✅ AUTH (your actual endpoints)
-                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
-                        .requestMatchers("/auth/guest").permitAll()
+                        .requestMatchers(HttpMethod.POST, "api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "api/auth/register").permitAll()
+                        .requestMatchers("/api/auth/guest").permitAll()
 
                         // ✅ PUBLIC
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
@@ -49,7 +49,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/plans/**").permitAll()
 
                         // ✅ ROLE BASED
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/subscription/**").authenticated()
 
@@ -70,7 +69,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOriginPatterns(List.of(
-                "https://www.smaraan.com",   // 🌐 production
+                "https://www.smaraan.com",
+                "https://api.smaraan.com",// 🌐 production
                 "http://localhost:*",        // 💻 dev
                 "http://127.0.0.1:*",        // 💻 dev alt
                 "chrome-extension://*"       // 🧩 extension
