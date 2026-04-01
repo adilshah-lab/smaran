@@ -2,6 +2,7 @@ package com.hinduprayerlock.backend.service;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.hinduprayerlock.backend.ai.dto.AuthResponse;
+import com.hinduprayerlock.backend.ai.dto.GoogleAuthRequest;
 import com.hinduprayerlock.backend.ai.dto.LoginResponse;
 import com.hinduprayerlock.backend.ai.dto.RegisterRequest;
 import com.hinduprayerlock.backend.exceptions.EmailAlreadyExistsException;
@@ -17,6 +18,7 @@ import com.hinduprayerlock.backend.utils.JwtUtil;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +29,9 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
+    @Value("${GOOGLE_CLIENT_ID}")
+    private String googleClientId;
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -138,42 +143,139 @@ public class AuthService {
 
     }
 
-    public LoginResponse googleLogin(String idToken) {
+    public LoginResponse googleLogin(GoogleAuthRequest request) {
 
-        GoogleIdToken.Payload payload = googleTokenVerifier.verify(idToken);
+        String email;
+        String name;
 
-        String email = payload.getEmail();
-        String name = (String) payload.get("name");
+        try {
 
-        Optional<UserEntity> optionalUser = userRepository.findByEmail(email);
+            // =========================
+            // ANDROID FLOW (idToken)
+            // =========================
+            if (request.getIdToken() != null && !request.getIdToken().isBlank()) {
 
-        UserEntity user;
+                GoogleIdToken.Payload payload =
+                        googleTokenVerifier.verify(request.getIdToken());
 
-        if (optionalUser.isPresent()) {
-            user = optionalUser.get();
-        } else {
-            user = new UserEntity();
-            user.setId(UUID.randomUUID());
-            user.setEmail(email);
-            user.setUsername(name);
-            user.setPassword(null);
-            user.setProvider("GOOGLE");
-            user.setCreatedAt(LocalDateTime.now());
-            user.setIsSubscribed(false);
+                if (payload == null) {
+                    throw new RuntimeException("Invalid Google ID token");
+                }
 
-            userRepository.save(user);
+                email = payload.getEmail();
+                name = (String) payload.get("name");
+
+                Boolean emailVerified = payload.getEmailVerified();
+
+                if (emailVerified == null || !emailVerified) {
+                    throw new RuntimeException("Email not verified by Google");
+                }
+            }
+
+            // =========================
+            // EXTENSION FLOW (accessToken)
+            // =========================
+            else if (request.getAccessToken() != null && !request.getAccessToken().isBlank()) {
+
+                String url = "https://www.googleapis.com/oauth2/v3/tokeninfo?access_token="
+                        + request.getAccessToken();
+
+                java.net.URL obj = new java.net.URL(url);
+                java.net.HttpURLConnection conn = (java.net.HttpURLConnection) obj.openConnection();
+                conn.setRequestMethod("GET");
+
+                int responseCode = conn.getResponseCode();
+
+                if (responseCode != 200) {
+                    throw new RuntimeException("Invalid Google access token");
+                }
+
+                java.io.BufferedReader in = new java.io.BufferedReader(
+                        new java.io.InputStreamReader(conn.getInputStream())
+                );
+
+                String inputLine;
+                StringBuilder response = new StringBuilder();
+
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                in.close();
+
+                org.json.JSONObject json = new org.json.JSONObject(response.toString());
+
+                // 🔐 VERIFY CLIENT ID
+                String aud = json.getString("aud");
+
+                if (!aud.equals(googleClientId)) {
+                    throw new RuntimeException("Token not issued for this app");
+                }
+
+                email = json.getString("email");
+                name = json.optString("name", "User");
+
+                // 🔐 CHECK EMAIL VERIFIED (IMPORTANT)
+                boolean emailVerified = json.optBoolean("email_verified", false);
+
+                if (!emailVerified) {
+                    throw new RuntimeException("Email not verified");
+                }
+            }
+
+            // =========================
+            // NO TOKEN PROVIDED
+            // =========================
+            else {
+                throw new RuntimeException("Google token is required");
+            }
+
+            // =========================
+            // USER HANDLING
+            // =========================
+            Optional<UserEntity> optionalUser = userRepository.findByEmail(email);
+
+            UserEntity user;
+
+            if (optionalUser.isPresent()) {
+
+                user = optionalUser.get();
+
+                // 🔐 Prevent provider mismatch
+                if (user.getProvider() != null && !user.getProvider().equals("GOOGLE")) {
+                    throw new RuntimeException("Please login using email/password");
+                }
+
+            } else {
+
+                user = new UserEntity();
+                user.setId(UUID.randomUUID());
+                user.setEmail(email);
+                user.setUsername(name);
+                user.setPassword(null);
+                user.setProvider("GOOGLE");
+                user.setCreatedAt(LocalDateTime.now());
+                user.setIsSubscribed(false);
+
+                userRepository.save(user);
+            }
+
+            // =========================
+            // JWT GENERATION
+            // =========================
+            String token = jwtUtil.generateToken(
+                    user.getId().toString(),
+                    user.getEmail(),
+                    "USER"
+            );
+
+            return new LoginResponse(
+                    token,
+                    user.getUsername(),
+                    user.getEmail()
+            );
+
+        } catch (Exception e) {
+            throw new RuntimeException("Google authentication failed");
         }
-
-        String token = jwtUtil.generateToken(
-                user.getId().toString(),
-                user.getEmail(),
-                "USER"
-        );
-
-        return new LoginResponse(
-                token,
-                user.getUsername(),
-                user.getEmail()
-        );
     }
 }

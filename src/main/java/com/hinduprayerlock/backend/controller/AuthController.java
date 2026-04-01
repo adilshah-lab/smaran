@@ -97,7 +97,7 @@ public class AuthController {
             @RequestBody GoogleAuthRequest request
     ) {
         return ResponseEntity.ok(
-                authService.googleLogin(request.getIdToken())
+                authService.googleLogin(request)
         );
     }
 }
