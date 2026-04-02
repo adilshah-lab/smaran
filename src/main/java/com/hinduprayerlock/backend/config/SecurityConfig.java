@@ -41,6 +41,7 @@ public class SecurityConfig {
                         // ✅ AUTH (your actual endpoints)
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/google").permitAll()
                         .requestMatchers("/api/v1/auth/guest").permitAll()
 
 //                        .requestMatchers("/api/v1/auth/**").authenticated()
