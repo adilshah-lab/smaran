@@ -24,17 +24,19 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
+    // 🔐 Generate JWT Token
     public String generateToken(String userId, String email, String role) {
         return Jwts.builder()
                 .setSubject(userId)
                 .claim("email", email)
-                .claim("role", role)
+                .claim("role", role) // 🔥 role added
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
+    // ✅ Validate Token
     public Claims validateToken(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
@@ -43,10 +45,22 @@ public class JwtUtil {
                 .getBody();
     }
 
+    // ✅ Extract User ID
     public String extractUserId(String token) {
         return extractAllClaims(token).getSubject();
     }
 
+    // ✅ Extract Role (🔥 NEW - IMPORTANT)
+    public String extractRole(String token) {
+        return extractAllClaims(token).get("role", String.class);
+    }
+
+    // ✅ Extract Email (optional but useful)
+    public String extractEmail(String token) {
+        return extractAllClaims(token).get("email", String.class);
+    }
+
+    // 🔍 Internal method
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())

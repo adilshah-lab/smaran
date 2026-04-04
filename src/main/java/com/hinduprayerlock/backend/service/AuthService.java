@@ -56,13 +56,14 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setCreatedAt(LocalDateTime.now());
         user.setIsSubscribed(false);
+        user.setRole("USER");
 
         userRepository.save(user);
 
         String token = jwtUtil.generateToken(
                 user.getId().toString(),
                 user.getEmail(),
-                "USER"
+                user.getRole()
         );
 
         return new AuthResponse(token, user.getUsername(), user.getCreatedAt());
@@ -85,13 +86,14 @@ public class AuthService {
         String token = jwtUtil.generateToken(
                 user.getId().toString(),
                 user.getEmail(),
-                "USER"
+                user.getRole()
         );
 
         return new LoginResponse(
                 token,
                 user.getUsername(),
-                user.getEmail()
+                user.getEmail(),
+                user.getCreatedAt()
         );
     }
 
@@ -255,6 +257,7 @@ public class AuthService {
                 user.setProvider("GOOGLE");
                 user.setCreatedAt(LocalDateTime.now());
                 user.setIsSubscribed(false);
+                user.setRole("USER");
 
                 userRepository.save(user);
             }
@@ -265,13 +268,14 @@ public class AuthService {
             String token = jwtUtil.generateToken(
                     user.getId().toString(),
                     user.getEmail(),
-                    "USER"
+                    user.getRole()
             );
 
             return new LoginResponse(
                     token,
                     user.getUsername(),
-                    user.getEmail()
+                    user.getEmail(),
+                    user.getCreatedAt()
             );
 
         } catch (Exception e) {

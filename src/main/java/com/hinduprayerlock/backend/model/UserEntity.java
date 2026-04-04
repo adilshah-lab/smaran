@@ -36,6 +36,12 @@ public class UserEntity {
     @Column(nullable = true, unique = true)
     private String phoneNumber;
 
+    //    google or normal
+    private String provider;
+
+    @Column(nullable = false)
+    private String role; // USER / ADMIN / GUEST
+
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -43,7 +49,6 @@ public class UserEntity {
     @Column(nullable = false)
     private Boolean isSubscribed = false;
     
-    //    google or normal
-    private String provider;
+
 
 }
