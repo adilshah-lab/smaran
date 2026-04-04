@@ -51,6 +51,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/mood/**").permitAll()
                         .requestMatchers("/api/v1/track/**").permitAll()
                         .requestMatchers("/api/v1/plans/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/plans").permitAll()
 
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/subscription/**").authenticated()

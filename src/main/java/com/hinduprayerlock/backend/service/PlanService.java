@@ -25,4 +25,37 @@ public class PlanService {
         return planRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Plan not found"));
     }
+
+    public Plan updatePlan(Long id, Plan updatedPlan) {
+
+        Plan existingPlan = planRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Plan not found"));
+
+        // ✅ Update only your fields
+        if (updatedPlan.getName() != null) {
+            existingPlan.setName(updatedPlan.getName());
+        }
+
+        if (updatedPlan.getDescription() != null) {
+            existingPlan.setDescription(updatedPlan.getDescription());
+        }
+
+        if (updatedPlan.getPrice() != null) {
+            existingPlan.setPrice(updatedPlan.getPrice());
+        }
+
+        if (updatedPlan.getDurationInDays() != null) {
+            existingPlan.setDurationInDays(updatedPlan.getDurationInDays());
+        }
+
+        if (updatedPlan.getActive() != null) {
+            existingPlan.setActive(updatedPlan.getActive());
+        }
+
+        if (updatedPlan.getGoogleProductId() != null) {
+            existingPlan.setGoogleProductId(updatedPlan.getGoogleProductId());
+        }
+
+        return planRepository.save(existingPlan);
+    }
 }
