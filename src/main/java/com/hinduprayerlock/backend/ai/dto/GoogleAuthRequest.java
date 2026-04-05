@@ -6,4 +6,5 @@ import lombok.Data;
 public class GoogleAuthRequest {
     private String idToken;
     private String accessToken;
+    private String flow;
 }

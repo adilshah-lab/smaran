@@ -216,7 +216,7 @@ public class AuthService {
                 email = json.getString("email");
                 name = json.optString("name", "User");
 
-                // 🔐 CHECK EMAIL VERIFIED (IMPORTANT)
+                // 🔐 CHECK EMAIL VERIFIED
                 boolean emailVerified = json.optBoolean("email_verified", false);
 
                 if (!emailVerified) {
@@ -232,27 +232,33 @@ public class AuthService {
             }
 
             // =========================
-            // USER HANDLING
+            // USER HANDLING WITH FLOW
             // =========================
             Optional<UserEntity> optionalUser = userRepository.findByEmail(email);
 
             UserEntity user;
 
-            if (optionalUser.isPresent()) {
+            String flow = request.getFlow(); // LOGIN or REGISTER
 
-                user = optionalUser.get();
+            // =========================
+            // 🚀 REGISTER FLOW
+            // =========================
+            if ("REGISTER".equalsIgnoreCase(flow)) {
 
-                // 🔐 Prevent provider mismatch
-                if (user.getProvider() != null && !user.getProvider().equals("GOOGLE")) {
-                    throw new RuntimeException("Please login using email/password");
+                if (optionalUser.isPresent()) {
+                    throw new RuntimeException("User already registered. Please login.");
                 }
-
-            } else {
 
                 user = new UserEntity();
                 user.setId(UUID.randomUUID());
                 user.setEmail(email);
-                user.setUsername(name);
+
+                // ✅ Only first name
+                String firstName = (name != null && !name.isBlank())
+                        ? name.split(" ")[0]
+                        : "User";
+
+                user.setUsername(firstName);
                 user.setPassword(null);
                 user.setProvider("GOOGLE");
                 user.setCreatedAt(LocalDateTime.now());
@@ -260,6 +266,30 @@ public class AuthService {
                 user.setRole("USER");
 
                 userRepository.save(user);
+            }
+
+            // =========================
+            // 🔐 LOGIN FLOW
+            // =========================
+            else if ("LOGIN".equalsIgnoreCase(flow)) {
+
+                if (optionalUser.isEmpty()) {
+                    throw new RuntimeException("User not registered. Please register first.");
+                }
+
+                user = optionalUser.get();
+
+                // 🔐 Prevent wrong provider login
+                if (user.getProvider() != null && !user.getProvider().equals("GOOGLE")) {
+                    throw new RuntimeException("Please login using email/password");
+                }
+            }
+
+            // =========================
+            // ❌ INVALID FLOW
+            // =========================
+            else {
+                throw new RuntimeException("Invalid flow. Use LOGIN or REGISTER");
             }
 
             // =========================
@@ -279,7 +309,7 @@ public class AuthService {
             );
 
         } catch (Exception e) {
-            throw new RuntimeException("Google authentication failed");
+            throw new RuntimeException(e.getMessage()); // better debugging
         }
     }
 }
