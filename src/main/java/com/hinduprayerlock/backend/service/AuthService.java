@@ -161,7 +161,7 @@ public class AuthService {
                         googleTokenVerifier.verify(request.getIdToken());
 
                 if (payload == null) {
-                    throw new RuntimeException("Invalid Google ID token");
+                    throw new InvalidCredentialsException("Invalid Google ID token");
                 }
 
                 email = payload.getEmail();
@@ -170,7 +170,7 @@ public class AuthService {
                 Boolean emailVerified = payload.getEmailVerified();
 
                 if (emailVerified == null || !emailVerified) {
-                    throw new RuntimeException("Email not verified by Google");
+                    throw new InvalidCredentialsException("Email not verified by Google");
                 }
             }
 
@@ -189,7 +189,7 @@ public class AuthService {
                 int responseCode = conn.getResponseCode();
 
                 if (responseCode != 200) {
-                    throw new RuntimeException("Invalid Google access token");
+                    throw new InvalidCredentialsException("Invalid Google access token");
                 }
 
                 java.io.BufferedReader in = new java.io.BufferedReader(
@@ -210,7 +210,7 @@ public class AuthService {
                 String aud = json.getString("aud");
 
                 if (!aud.equals(googleClientId)) {
-                    throw new RuntimeException("Token not issued for this app");
+                    throw new InvalidCredentialsException("Token not issued for this app");
                 }
 
                 email = json.getString("email");
@@ -220,7 +220,7 @@ public class AuthService {
                 boolean emailVerified = json.optBoolean("email_verified", false);
 
                 if (!emailVerified) {
-                    throw new RuntimeException("Email not verified");
+                    throw new InvalidCredentialsException("Email not verified by Google");
                 }
             }
 
@@ -228,7 +228,7 @@ public class AuthService {
             // NO TOKEN PROVIDED
             // =========================
             else {
-                throw new RuntimeException("Google token is required");
+                throw new InvalidCredentialsException("Google token is required");
             }
 
             // =========================
@@ -246,7 +246,7 @@ public class AuthService {
             if ("REGISTER".equalsIgnoreCase(flow)) {
 
                 if (optionalUser.isPresent()) {
-                    throw new RuntimeException("User already registered. Please login.");
+                    throw new EmailAlreadyExistsException("User already registered. Please login.");
                 }
 
                 user = new UserEntity();
@@ -274,14 +274,14 @@ public class AuthService {
             else if ("LOGIN".equalsIgnoreCase(flow)) {
 
                 if (optionalUser.isEmpty()) {
-                    throw new RuntimeException("User not registered. Please register first.");
+                    throw new ResourceNotFoundException("User not registered. Please register first.");
                 }
 
                 user = optionalUser.get();
 
                 // 🔐 Prevent wrong provider login
                 if (user.getProvider() != null && !user.getProvider().equals("GOOGLE")) {
-                    throw new RuntimeException("Please login using email/password");
+                    throw new InvalidCredentialsException("Please login using email/password");
                 }
             }
 
@@ -289,7 +289,7 @@ public class AuthService {
             // ❌ INVALID FLOW
             // =========================
             else {
-                throw new RuntimeException("Invalid flow. Use LOGIN or REGISTER");
+                throw new InvalidCredentialsException("Invalid flow. Use LOGIN or REGISTER");
             }
 
             // =========================
@@ -308,8 +308,11 @@ public class AuthService {
                     user.getCreatedAt()
             );
 
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage()); // better debugging
+        } catch (java.io.IOException e) {
+            throw new InvalidCredentialsException("Error communicating with Google");
+        }
+        catch (Exception e) {
+            throw e; // preserve custom exceptions
         }
     }
 }
