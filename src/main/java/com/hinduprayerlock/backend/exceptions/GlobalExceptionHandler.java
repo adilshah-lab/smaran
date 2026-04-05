@@ -41,7 +41,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> handleResourceNotFound(ResourceNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of(
-                        "message", ex.getMessage(),   // ✅ IMPORTANT
+                        "error", ex.getMessage(),   // ✅ CHANGE message → error
                         "timestamp", LocalDateTime.now()
                 ));
     }
