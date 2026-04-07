@@ -7,6 +7,7 @@ import com.hinduprayerlock.backend.model.*;
 import com.hinduprayerlock.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -158,6 +159,7 @@ public class GitaService {
     }
 
     // ✅ Remove saved verse
+    @Transactional
     public void removeSavedVerse(UUID userId, int chapter, int verse) {
         savedVerseRepository
                 .deleteByUserIdAndChapterNumberAndVerseNumber(userId, chapter, verse);
