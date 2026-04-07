@@ -57,6 +57,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/subscription/**").authenticated()
                         .requestMatchers("/api/v1/users/**").authenticated()
                         .requestMatchers("/api/v1/tracking/**").authenticated()
+                        .requestMatchers("/api/v1/content/gita/**").authenticated()
 
 //                        .requestMatchers("/api/v1/**")
 //                        .hasAnyRole("USER", "GUEST", "ADMIN")
