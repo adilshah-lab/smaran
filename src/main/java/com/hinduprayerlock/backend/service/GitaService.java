@@ -97,7 +97,9 @@ public class GitaService {
             verse = 1;
             isNewChapter = true;
 
-            if (chapter > 18) return null;
+            if (chapter > 18) {
+                throw new RuntimeException("All chapters completed");
+            }
         } else {
             verse++;
         }
@@ -143,16 +145,15 @@ public class GitaService {
     // ✅ Save verse
     public void saveVerse(UUID userId, int chapter, int verse) {
 
-        boolean exists = savedVerseRepository
-                .existsByUserIdAndChapterNumberAndVerseNumber(userId, chapter, verse);
+        SavedVerse sv = new SavedVerse();
+        sv.setUserId(userId);
+        sv.setChapterNumber(chapter);
+        sv.setVerseNumber(verse);
 
-        if (!exists) {
-            SavedVerse sv = new SavedVerse();
-            sv.setUserId(userId);
-            sv.setChapterNumber(chapter);
-            sv.setVerseNumber(verse);
-
+        try {
             savedVerseRepository.save(sv);
+        } catch (Exception e) {
+            // already exists → ignore
         }
     }
 
@@ -166,28 +167,18 @@ public class GitaService {
     public List<NextVerseResponse> getSavedVerses(UUID userId) {
 
         return savedVerseRepository
-                .findByUserIdOrderByCreatedAtDesc(userId)
+                .findSavedVersesWithDetails(userId)
                 .stream()
-                .map(sv -> {
-
-                    Verse v = verseRepository
-                            .findByChapterNumberAndVerseNumber(
-                                    sv.getChapterNumber(),
-                                    sv.getVerseNumber()
-                            )
-                            .orElseThrow();
-
-                    return new NextVerseResponse(
-                            v.getChapterNumber(),
-                            v.getVerseNumber(),
-                            v.getVerseLabel(),
-                            v.getSanskrit(),
-                            v.getHindi(),
-                            v.getEnglish(),
-                            false
-                    );
-
-                }).toList();
+                .map(v -> new NextVerseResponse(
+                        v.getChapterNumber(),
+                        v.getVerseNumber(),
+                        v.getVerseLabel(),
+                        v.getSanskrit(),
+                        v.getHindi(),
+                        v.getEnglish(),
+                        false
+                ))
+                .toList();
     }
 
     public NextVerseResponse getVerse(UUID userId, int chapter, int verse) {
