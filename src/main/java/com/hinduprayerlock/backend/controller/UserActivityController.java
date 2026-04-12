@@ -1,12 +1,12 @@
 package com.hinduprayerlock.backend.controller;
 
 import com.hinduprayerlock.backend.model.AuthUser;
+import com.hinduprayerlock.backend.model.DailyUserStats;
 import com.hinduprayerlock.backend.service.UserActivityService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/activity")
@@ -39,5 +39,12 @@ public class UserActivityController {
     public void usage(@AuthenticationPrincipal AuthUser user,
                       @RequestParam int minutes) {
         service.addUsage(user.getId(), minutes);
+    }
+
+    @GetMapping("/weekly")
+    public List<DailyUserStats> getWeeklyStats(
+            @AuthenticationPrincipal AuthUser user
+    ) {
+        return service.getWeekly(user.getId());
     }
 }
