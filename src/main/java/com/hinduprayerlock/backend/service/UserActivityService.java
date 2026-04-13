@@ -7,6 +7,7 @@ import com.hinduprayerlock.backend.repository.JaapStatsRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,13 +29,17 @@ public class UserActivityService {
                     DailyUserStats s = new DailyUserStats();
                     s.setUserId(userId);
                     s.setDate(date);
+                    s.setJaapCount(0);
+                    s.setMeditationMinutes(0);
+                    s.setAppUsageMinutes(0);
+                    s.setAppOpened(false);
                     return s;
                 });
     }
 
     public void markAppOpened(UUID userId) {
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Kolkata"));
 
         DailyUserStats stats = getOrCreate(userId, today);
         stats.setAppOpened(true);
@@ -43,7 +48,11 @@ public class UserActivityService {
 
         // 🔥 STREAK LOGIC (only here, no change in sync)
         JaapStats jaapStats = jaapRepo.findByUserId(userId)
-                .orElse(new JaapStats());
+                .orElseGet(() -> {
+                    JaapStats j = new JaapStats();
+                    j.setUserId(userId); // 🔥 IMPORTANT
+                    return j;
+                });
 
         if (jaapStats.getLastActiveDate() != null) {
 
@@ -64,7 +73,7 @@ public class UserActivityService {
 
     public void addJaap(UUID userId, int count) {
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Kolkata"));
 
         DailyUserStats stats = getOrCreate(userId, today);
 
@@ -75,7 +84,7 @@ public class UserActivityService {
 
     public void addMeditation(UUID userId, int minutes) {
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Kolkata"));
 
         DailyUserStats stats = getOrCreate(userId, today);
 
@@ -88,7 +97,7 @@ public class UserActivityService {
 
     public void addUsage(UUID userId, int minutes) {
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Kolkata"));
 
         DailyUserStats stats = getOrCreate(userId, today);
 
@@ -101,7 +110,7 @@ public class UserActivityService {
 
     public List<DailyUserStats> getWeekly(UUID userId) {
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Kolkata"));
 
         return dailyRepo.findByUserIdAndDateBetween(
                 userId,
