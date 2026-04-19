@@ -8,7 +8,7 @@ public class UserMapper {
     public static UserResponse map(UserEntity user) {
         return new UserResponse(
                 user.getId(),
-                user.getUsername(),
+                user.getName(),
                 user.getEmail(),
 //                user.getPhoneNumber(),
                 user.getIsSubscribed(),

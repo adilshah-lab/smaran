@@ -25,7 +25,7 @@ public class UserEntity {
     private UUID id;
 
     @Column(nullable = true)
-    private String username;
+    private String name;
 
     @Column(nullable = true, unique = true)
     private String email;

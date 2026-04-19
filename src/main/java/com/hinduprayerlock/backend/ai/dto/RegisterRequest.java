@@ -22,5 +22,5 @@ public class RegisterRequest {
 //    private String phoneNumber;
 
     @NotBlank(message = "Username is required")
-    private String username;
+    private String name;
 }

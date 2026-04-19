@@ -50,7 +50,7 @@ public class AuthService {
 
         UserEntity user = new UserEntity();
         user.setId(UUID.randomUUID());
-        user.setUsername(request.getUsername());
+        user.setName(request.getName());
         user.setEmail(request.getEmail());
 //        user.setPhoneNumber(request.getPhoneNumber());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -66,7 +66,7 @@ public class AuthService {
                 user.getRole()
         );
 
-        return new AuthResponse(token, user.getUsername(), user.getCreatedAt());
+        return new AuthResponse(token, user.getName(), user.getCreatedAt());
     }
 
     public LoginResponse login(LoginRequest request) {
@@ -91,7 +91,7 @@ public class AuthService {
 
         return new LoginResponse(
                 token,
-                user.getUsername(),
+                user.getName(),
                 user.getEmail(),
                 user.getCreatedAt()
         );
@@ -112,7 +112,7 @@ public class AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (request.getUsername() != null && !request.getUsername().trim().isEmpty()) {
-            user.setUsername(request.getUsername().trim());
+            user.setName(request.getUsername().trim());
         }
 
 //        if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
@@ -136,7 +136,7 @@ public class AuthService {
 
         return new UserResponse(
                 user.getId(),
-                user.getUsername(),
+                user.getName(),
                 user.getEmail(),
 //                user.getPhoneNumber(),
                 user.getIsSubscribed(),
@@ -258,7 +258,7 @@ public class AuthService {
                         ? name.split(" ")[0]
                         : "User";
 
-                user.setUsername(firstName);
+                user.setName(firstName);
                 user.setPassword(null);
                 user.setProvider("GOOGLE");
                 user.setCreatedAt(LocalDateTime.now());
@@ -303,7 +303,7 @@ public class AuthService {
 
             return new LoginResponse(
                     token,
-                    user.getUsername(),
+                    user.getName(),
                     user.getEmail(),
                     user.getCreatedAt()
             );
