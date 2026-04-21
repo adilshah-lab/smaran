@@ -1,10 +1,12 @@
 package com.hinduprayerlock.backend.controller;
 
+import com.hinduprayerlock.backend.model.OrderMapping;
 import com.hinduprayerlock.backend.model.Plan;
 import com.hinduprayerlock.backend.model.SubscriptionProvider;
 import com.hinduprayerlock.backend.model.UserEntity;
 import com.hinduprayerlock.backend.model.dto.RazorpayVerifyRequest;
 import com.hinduprayerlock.backend.model.dto.SubscriptionData;
+import com.hinduprayerlock.backend.repository.OrderMappingRepository;
 import com.hinduprayerlock.backend.repository.UserRepository;
 import com.hinduprayerlock.backend.service.PlanService;
 import com.hinduprayerlock.backend.service.RazorpayService;
@@ -26,6 +28,7 @@ public class WebSubscriptionController {
     private final UserRepository userRepository;
     private final SubscriptionService subscriptionService;
     private final PlanService planService;
+    private final OrderMappingRepository orderMappingRepository;
 
     // ================= CREATE ORDER =================
 
@@ -42,13 +45,24 @@ public class WebSubscriptionController {
 
         Plan plan = planService.getPlanById(planId);
 
-        int amount = (int) (plan.getPrice() * 100); // ₹ → paise
+        int amount = (int) (plan.getPrice() * 100);
 
         JSONObject order = razorpayService.createOrder(
                 amount,
                 "receipt_" + System.currentTimeMillis(),
                 user.getId().toString()
         );
+
+        String orderId = order.getString("id");
+
+        // ✅ SAVE MAPPING
+        OrderMapping mapping = new OrderMapping();
+        mapping.setOrderId(orderId);
+        mapping.setUserId(user.getId());
+        mapping.setPlanId(plan.getId());
+        mapping.setAmount(amount);
+
+        orderMappingRepository.save(mapping);
 
         return ResponseEntity.ok(order.toString());
     }
@@ -66,7 +80,6 @@ public class WebSubscriptionController {
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 🔒 Step 1: Verify signature
         boolean isValid = razorpayService.verifyPaymentSignature(
                 request.getOrderId(),
                 request.getPaymentId(),
@@ -77,29 +90,54 @@ public class WebSubscriptionController {
             throw new RuntimeException("Invalid payment");
         }
 
-        // 🔥 Step 2: Fetch Plan (MANDATORY FIX)
-        Plan plan = planService.getPlanById(request.getPlanId());
+        OrderMapping mapping = orderMappingRepository
+                .findByOrderId(request.getOrderId())
+                .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        // 🔒 Step 3: (Optional but recommended) Validate amount
-        int expectedAmount = (int) (plan.getPrice() * 100);
+        // 🔒 Ownership check
+        if (!mapping.getUserId().equals(user.getId())) {
+            throw new RuntimeException("Unauthorized order");
+        }
 
-        // 👉 If you pass amount from frontend, validate it here
-        if (request.getAmount() != null && request.getAmount() != expectedAmount) {
+        // 🔁 Webhook fallback
+        if (mapping.getProcessed()) {
+            return ResponseEntity.ok("Already processed via webhook");
+        }
+
+        // 🔒 Fetch payment from Razorpay
+        var payment = razorpayService.fetchPayment(request.getPaymentId());
+
+        if (!"captured".equals(payment.get("status"))) {
+            throw new RuntimeException("Payment not captured");
+        }
+
+        int paidAmount = payment.get("amount");
+
+        if (!mapping.getAmount().equals(paidAmount)) {
             throw new RuntimeException("Amount mismatch");
         }
 
-        // 🔁 Step 4: Convert to common DTO
+        Plan plan = planService.getPlanById(mapping.getPlanId());
+
+        // 🔒 Prevent race condition
+        synchronized (this) {
+            if (mapping.getProcessed()) {
+                return ResponseEntity.ok("Already processed");
+            }
+
+            mapping.setProcessed(true);
+            orderMappingRepository.save(mapping);
+        }
+
         SubscriptionData data = new SubscriptionData();
         data.setProvider(SubscriptionProvider.RAZORPAY);
-        data.setPlanId(plan.getId()); // ✅ FIXED
+        data.setPlanId(plan.getId());
         data.setProductId(plan.getName());
         data.setTransactionId(request.getPaymentId());
-        data.setSubscriptionId(null); // if using order-based flow
         data.setStartTime(LocalDateTime.now());
         data.setExpiryTime(LocalDateTime.now().plusDays(plan.getDurationInDays()));
         data.setAutoRenewing(false);
 
-        // 💾 Step 5: Save subscription
         subscriptionService.saveSubscription(user.getId(), data);
 
         return ResponseEntity.ok("Payment Verified");

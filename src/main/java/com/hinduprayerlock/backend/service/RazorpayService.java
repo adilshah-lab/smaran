@@ -1,20 +1,18 @@
 package com.hinduprayerlock.backend.service;
 
-import com.hinduprayerlock.backend.model.Subscription;
-import com.hinduprayerlock.backend.model.SubscriptionProvider;
-import com.hinduprayerlock.backend.model.SubscriptionStatus;
+import com.hinduprayerlock.backend.model.*;
+import com.hinduprayerlock.backend.model.Plan;
 import com.hinduprayerlock.backend.model.dto.SubscriptionData;
+import com.hinduprayerlock.backend.repository.OrderMappingRepository;
+import com.hinduprayerlock.backend.repository.PlanRepository;
 import com.hinduprayerlock.backend.repository.SubscriptionRepository;
-import com.razorpay.Order;
-import com.razorpay.RazorpayClient;
+import com.razorpay.*;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
+import jakarta.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -31,17 +29,27 @@ public class RazorpayService {
     @Value("${RAZORPAY_WEBHOOK_SECRET}")
     private String webhookSecret;
 
+    private RazorpayClient razorpayClient; // ✅ GLOBAL CLIENT
+
     private final SubscriptionService subscriptionService;
     private final SubscriptionRepository subscriptionRepository;
+    private final OrderMappingRepository orderMappingRepository;
+    private final PlanRepository planRepository;
 
-    /**
-     * ✅ Create Order
-     */
+    // ✅ INIT CLIENT (VERY IMPORTANT)
+    @PostConstruct
+    public void init() {
+        try {
+            this.razorpayClient = new RazorpayClient(key, secret);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize Razorpay client", e);
+        }
+    }
+
+    // ================= CREATE ORDER =================
     public JSONObject createOrder(int amount, String receiptId, String userId) {
 
         try {
-            RazorpayClient client = new RazorpayClient(key, secret);
-
             JSONObject orderRequest = new JSONObject();
             orderRequest.put("amount", amount);
             orderRequest.put("currency", "INR");
@@ -52,7 +60,7 @@ public class RazorpayService {
 
             orderRequest.put("notes", notes);
 
-            Order order = client.orders.create(orderRequest);
+            Order order = razorpayClient.orders.create(orderRequest);
 
             return order.toJson();
 
@@ -61,214 +69,84 @@ public class RazorpayService {
         }
     }
 
-    /**
-     * ✅ Verify Payment Signature
-     */
+    // ================= VERIFY PAYMENT SIGNATURE =================
     public boolean verifyPaymentSignature(
             String orderId,
             String paymentId,
             String razorpaySignature
     ) {
-
         try {
             String payload = orderId + "|" + paymentId;
-            String generatedSignature = hmacSha256(payload, secret);
-
-            return generatedSignature.equals(razorpaySignature);
-
+            return Utils.verifySignature(payload, razorpaySignature, secret);
         } catch (Exception e) {
-            throw new RuntimeException("Error verifying payment signature", e);
+            return false;
         }
     }
 
-    /**
-     * ✅ Verify Webhook Signature
-     */
-    public boolean verifyWebhookSignature(String payload, String actualSignature) {
-
+    // ================= VERIFY WEBHOOK SIGNATURE =================
+    public boolean verifyWebhookSignature(String payload, String signature) {
         try {
-            String expectedSignature = hmacSha256(payload, webhookSecret);
-            return expectedSignature.equals(actualSignature);
-
+            return Utils.verifyWebhookSignature(payload, signature, webhookSecret);
         } catch (Exception e) {
-            throw new RuntimeException("Webhook signature verification failed", e);
+            return false;
         }
     }
 
-    /**
-     * ✅ Process Webhook Events
-     */
+    // ================= FETCH PAYMENT =================
+    public Payment fetchPayment(String paymentId) {
+        try {
+            return razorpayClient.payments.fetch(paymentId);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to fetch payment from Razorpay");
+        }
+    }
+
+    // ================= PROCESS WEBHOOK =================
     public void processWebhook(String payload, String signature) {
 
         if (!verifyWebhookSignature(payload, signature)) {
             throw new RuntimeException("Invalid webhook signature");
         }
 
-        JSONObject json = new JSONObject(payload);
-        String event = json.getString("event");
+        JSONObject event = new JSONObject(payload);
+        String eventType = event.getString("event");
 
-        System.out.println("Webhook Event: " + event);
-
-        switch (event) {
-
-            case "payment.captured":
-                handlePaymentCaptured(json);
-                break;
-
-            case "payment.failed":
-                handlePaymentFailed(json);
-                break;
-
-            case "subscription.charged":
-                handleSubscriptionCharged(json);
-                break;
-
-            case "subscription.cancelled":
-                handleSubscriptionCancelled(json);
-                break;
-
-            default:
-                System.out.println("Unhandled webhook event: " + event);
-        }
-    }
-
-    /**
-     * ✅ Handle successful payment
-     */
-    private void handlePaymentCaptured(JSONObject json) {
-
-        JSONObject paymentEntity =
-                json.getJSONObject("payload")
-                        .getJSONObject("payment")
-                        .getJSONObject("entity");
-
-        String paymentId = paymentEntity.getString("id");
-
-        // 🔥 Prevent duplicate processing
-        if (subscriptionRepository.findByRazorpayPaymentId(paymentId).isPresent()) {
+        if (!"payment.captured".equals(eventType)) {
             return;
         }
 
-        String userId = paymentEntity
-                .getJSONObject("notes")
-                .getString("userId");
+        JSONObject paymentEntity = event
+                .getJSONObject("payload")
+                .getJSONObject("payment")
+                .getJSONObject("entity");
 
-        System.out.println("Payment for user: " + userId);
+        String paymentId = paymentEntity.getString("id");
+        String orderId = paymentEntity.getString("order_id");
+        int amount = paymentEntity.getInt("amount");
+
+        OrderMapping mapping = orderMappingRepository
+                .findByOrderId(orderId)
+                .orElseThrow(() -> new RuntimeException("Order mapping not found"));
+
+        if (mapping.getProcessed()) return;
+
+        if (!mapping.getAmount().equals(amount)) {
+            throw new RuntimeException("Amount mismatch in webhook");
+        }
+
+        Plan plan = planRepository.findById(mapping.getPlanId())
+                .orElseThrow(() -> new RuntimeException("Plan not found"));
 
         SubscriptionData data = new SubscriptionData();
         data.setProvider(SubscriptionProvider.RAZORPAY);
-        data.setProductId("premium_plan");
+        data.setPlanId(plan.getId());
+        data.setProductId(plan.getName());
         data.setTransactionId(paymentId);
-        data.setStartTime(LocalDateTime.now());
-        data.setExpiryTime(LocalDateTime.now().plusMonths(1));
         data.setAutoRenewing(false);
 
-        subscriptionService.saveSubscription(UUID.fromString(userId), data);
-    }
+        subscriptionService.saveSubscription(mapping.getUserId(), data);
 
-    /**
-     * ❌ Handle failed payment
-     */
-    private void handlePaymentFailed(JSONObject json) {
-
-        JSONObject paymentEntity =
-                json.getJSONObject("payload")
-                        .getJSONObject("payment")
-                        .getJSONObject("entity");
-
-        String paymentId = paymentEntity.getString("id");
-
-        System.out.println("Payment Failed: " + paymentId);
-    }
-
-    /**
-     * 🔁 Handle recurring subscription payment
-     */
-    private void handleSubscriptionCharged(JSONObject json) {
-
-        JSONObject subEntity =
-                json.getJSONObject("payload")
-                        .getJSONObject("subscription")
-                        .getJSONObject("entity");
-
-        String subscriptionId = subEntity.getString("id");
-
-        Subscription sub = subscriptionRepository
-                .findByRazorpaySubscriptionId(subscriptionId)
-                .orElseThrow(() -> new RuntimeException("Subscription not found"));
-
-        // 🔥 FIX: Use plan duration (not snapshot)
-        int duration = sub.getPlan().getDurationInDays();
-
-        // 🔥 Safe extension
-        LocalDateTime baseTime = sub.getExpiryTime().isAfter(LocalDateTime.now())
-                ? sub.getExpiryTime()
-                : LocalDateTime.now();
-
-        sub.setExpiryTime(baseTime.plusDays(duration));
-        sub.setStatus(SubscriptionStatus.ACTIVE);
-
-        subscriptionRepository.save(sub);
-
-        subscriptionService.updateUserSubscriptionFlag(sub.getUserId(), true);
-    }
-
-    /**
-     * ❌ Handle subscription cancellation
-     */
-    private void handleSubscriptionCancelled(JSONObject json) {
-
-        JSONObject subEntity =
-                json.getJSONObject("payload")
-                        .getJSONObject("subscription")
-                        .getJSONObject("entity");
-
-        String subscriptionId = subEntity.getString("id");
-
-        System.out.println("Subscription Cancelled: " + subscriptionId);
-
-        Subscription sub = subscriptionRepository
-                .findByRazorpaySubscriptionId(subscriptionId)
-                .orElseThrow(() -> new RuntimeException("Subscription not found"));
-
-        sub.setStatus(SubscriptionStatus.CANCELLED);
-        sub.setAutoRenewing(false);
-
-        subscriptionRepository.save(sub);
-
-        subscriptionService.updateUserSubscriptionFlag(sub.getUserId(), true);
-    }
-
-    /**
-     * 🔐 HMAC SHA256 Generator
-     */
-    private String hmacSha256(String data, String secret) throws Exception {
-
-        Mac mac = Mac.getInstance("HmacSHA256");
-
-        SecretKeySpec secretKey =
-                new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
-
-        mac.init(secretKey);
-
-        byte[] hash = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-
-        return bytesToHex(hash);
-    }
-
-    /**
-     * 🔁 Convert byte[] → hex
-     */
-    private String bytesToHex(byte[] bytes) {
-
-        StringBuilder hex = new StringBuilder(2 * bytes.length);
-
-        for (byte b : bytes) {
-            String s = Integer.toHexString(0xff & b);
-            if (s.length() == 1) hex.append('0');
-            hex.append(s);
-        }
-
-        return hex.toString();
+        mapping.setProcessed(true);
+        orderMappingRepository.save(mapping);
     }
 }
