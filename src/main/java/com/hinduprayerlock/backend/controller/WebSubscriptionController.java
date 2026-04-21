@@ -27,6 +27,8 @@ public class WebSubscriptionController {
     private final SubscriptionService subscriptionService;
     private final PlanService planService;
 
+    // ================= CREATE ORDER =================
+
     @PostMapping("/create-order")
     public ResponseEntity<?> createOrder(
             @RequestParam Long planId,
@@ -40,7 +42,7 @@ public class WebSubscriptionController {
 
         Plan plan = planService.getPlanById(planId);
 
-        int amount = (int) (plan.getPrice() * 100); // convert to paise
+        int amount = (int) (plan.getPrice() * 100); // ₹ → paise
 
         JSONObject order = razorpayService.createOrder(
                 amount,
@@ -50,6 +52,8 @@ public class WebSubscriptionController {
 
         return ResponseEntity.ok(order.toString());
     }
+
+    // ================= VERIFY PAYMENT =================
 
     @PostMapping("/verify-payment")
     public ResponseEntity<?> verifyPayment(
@@ -62,6 +66,7 @@ public class WebSubscriptionController {
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // 🔒 Step 1: Verify signature
         boolean isValid = razorpayService.verifyPaymentSignature(
                 request.getOrderId(),
                 request.getPaymentId(),
@@ -72,15 +77,29 @@ public class WebSubscriptionController {
             throw new RuntimeException("Invalid payment");
         }
 
-        // Convert to common DTO
+        // 🔥 Step 2: Fetch Plan (MANDATORY FIX)
+        Plan plan = planService.getPlanById(request.getPlanId());
+
+        // 🔒 Step 3: (Optional but recommended) Validate amount
+        int expectedAmount = (int) (plan.getPrice() * 100);
+
+        // 👉 If you pass amount from frontend, validate it here
+        if (request.getAmount() != null && request.getAmount() != expectedAmount) {
+            throw new RuntimeException("Amount mismatch");
+        }
+
+        // 🔁 Step 4: Convert to common DTO
         SubscriptionData data = new SubscriptionData();
         data.setProvider(SubscriptionProvider.RAZORPAY);
-        data.setProductId("premium_plan");
+        data.setPlanId(plan.getId()); // ✅ FIXED
+        data.setProductId(plan.getName());
         data.setTransactionId(request.getPaymentId());
+        data.setSubscriptionId(null); // if using order-based flow
         data.setStartTime(LocalDateTime.now());
-        data.setExpiryTime(LocalDateTime.now().plusMonths(1));
+        data.setExpiryTime(LocalDateTime.now().plusDays(plan.getDurationInDays()));
         data.setAutoRenewing(false);
 
+        // 💾 Step 5: Save subscription
         subscriptionService.saveSubscription(user.getId(), data);
 
         return ResponseEntity.ok("Payment Verified");

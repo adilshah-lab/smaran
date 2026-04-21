@@ -11,5 +11,7 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
     List<Plan> findByActiveTrue();
 
     Optional<Plan> findByGoogleProductId(String googleProductId);
+
+    Optional<Plan> findByRazorpayPlanId(String razorpayPlanId);
     
 }

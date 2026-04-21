@@ -56,6 +56,10 @@ public class PlanService {
             existingPlan.setGoogleProductId(updatedPlan.getGoogleProductId());
         }
 
+        if (updatedPlan.getRazorpayPlanId() != null) {
+            existingPlan.setRazorpayPlanId(updatedPlan.getRazorpayPlanId());
+        }
+
         return planRepository.save(existingPlan);
     }
 }

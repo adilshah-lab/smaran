@@ -106,7 +106,12 @@ public class SubscriptionService {
 
     public void saveSubscription(UUID userId, SubscriptionData data) {
 
-        // Duplicate protection
+        // 🔒 Validate input
+        if (data.getPlanId() == null) {
+            throw new RuntimeException("Plan ID is required");
+        }
+
+        // 🔒 Duplicate protection (Razorpay)
         if (data.getProvider() == SubscriptionProvider.RAZORPAY) {
             if (subscriptionRepository
                     .findByRazorpayPaymentId(data.getTransactionId())
@@ -115,6 +120,7 @@ public class SubscriptionService {
             }
         }
 
+        // 📦 Fetch Plan
         Plan plan = planRepository.findById(data.getPlanId())
                 .orElseThrow(() -> new RuntimeException("Plan not found"));
 
@@ -124,36 +130,57 @@ public class SubscriptionService {
 
             Subscription sub = existingSub.get();
 
-            LocalDateTime baseTime = sub.getExpiryTime().isAfter(LocalDateTime.now())
-                    ? sub.getExpiryTime()
-                    : LocalDateTime.now();
+            // 🔥 PLAN CHANGE LOGIC
+            if (!sub.getPlan().getId().equals(plan.getId())) {
 
-            LocalDateTime newExpiry = baseTime.plusDays(plan.getDurationInDays());
+                // 👉 Different plan → RESET subscription
+                sub.setStartTime(LocalDateTime.now());
+                sub.setExpiryTime(LocalDateTime.now().plusDays(plan.getDurationInDays()));
 
-            sub.setExpiryTime(newExpiry);
+            } else {
+
+                // 👉 Same plan → EXTEND subscription
+                LocalDateTime baseTime = sub.getExpiryTime().isAfter(LocalDateTime.now())
+                        ? sub.getExpiryTime()
+                        : LocalDateTime.now();
+
+                sub.setExpiryTime(baseTime.plusDays(plan.getDurationInDays()));
+            }
+
+            // 🔁 Common updates
             sub.setPlan(plan);
             sub.setAmount(plan.getPrice());
+            sub.setProvider(data.getProvider());
 
-            // snapshot
+            // snapshot (VERY IMPORTANT)
             sub.setPlanName(plan.getName());
             sub.setDurationDays(plan.getDurationInDays());
+
+            // Razorpay fields
+            if (data.getProvider() == SubscriptionProvider.RAZORPAY) {
+                sub.setRazorpayPaymentId(data.getTransactionId());
+                sub.setRazorpaySubscriptionId(data.getSubscriptionId());
+            }
+
+            sub.setAutoRenewing(data.isAutoRenewing());
+            sub.setStatus(SubscriptionStatus.ACTIVE);
+            sub.setUpdatedAt(LocalDateTime.now());
 
             subscriptionRepository.save(sub);
 
         } else {
 
+            // 🆕 Create new subscription
             Subscription sub = new Subscription();
 
             sub.setUserId(userId);
             sub.setProductId(plan.getName());
             sub.setProvider(data.getProvider());
-            System.out.println("Saving subscription for user: " + userId);
             sub.setPlan(plan);
 
+            // Razorpay fields
             if (data.getProvider() == SubscriptionProvider.RAZORPAY) {
                 sub.setRazorpayPaymentId(data.getTransactionId());
-
-                // 🔥 IMPORTANT (add this)
                 sub.setRazorpaySubscriptionId(data.getSubscriptionId());
             }
 
@@ -168,10 +195,12 @@ public class SubscriptionService {
             sub.setAutoRenewing(data.isAutoRenewing());
             sub.setStatus(SubscriptionStatus.ACTIVE);
             sub.setCreatedAt(LocalDateTime.now());
+            sub.setUpdatedAt(LocalDateTime.now());
 
             subscriptionRepository.save(sub);
         }
 
+        // ✅ Update user flag
         updateUserSubscriptionFlag(userId, true);
     }
 

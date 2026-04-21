@@ -8,4 +8,6 @@ public class RazorpayVerifyRequest {
     private String orderId;
     private String paymentId;
     private String signature;
+    private Long planId;
+    private Integer amount;
 }

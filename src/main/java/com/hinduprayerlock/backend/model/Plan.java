@@ -23,4 +23,6 @@ public class Plan {
     private Boolean active; // only active plans visible
 
     private String googleProductId;
+
+    private String razorpayPlanId;
 }
