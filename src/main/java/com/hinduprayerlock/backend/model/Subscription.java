@@ -8,9 +8,9 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "subscriptions", indexes = {
-        @Index(name = "idx_user_id", columnList = "userId"),
+        @Index(name = "idx_user_id", columnList = "user_id"),
         @Index(name = "idx_status", columnList = "status"),
-        @Index(name = "idx_expiry", columnList = "expiryTime")
+        @Index(name = "idx_expiry", columnList = "expiry_time")
 })
 @Data
 public class Subscription {
@@ -19,6 +19,7 @@ public class Subscription {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "user_id")
     private UUID userId;
 
     private String productId;
@@ -48,14 +49,24 @@ public class Subscription {
 
     private Double amount;
 
-    // 🔥 Snapshot (VERY IMPORTANT)
+    // Snapshot
     private String planName;
     private Integer durationDays;
 
     private LocalDateTime startTime;
+
+    @Column(name = "expiry_time")
     private LocalDateTime expiryTime;
 
     private Boolean autoRenewing;
+
+    @Column(unique = true)
+    private String invoiceNumber;
+
+    // Optional relation (READ ONLY)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    private UserEntity user;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

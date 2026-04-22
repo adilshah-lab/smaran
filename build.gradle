@@ -60,6 +60,7 @@ dependencies {
 	implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
 	implementation 'org.springframework.boot:spring-boot-starter-logging'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10'
 
 
 }
